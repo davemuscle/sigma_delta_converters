@@ -6,9 +6,9 @@ module adc_tb;
     localparam SCLK = 44800;
     localparam BOSR = 256;
     localparam WDTH = 16;
-    localparam CAP_FUDGE = 32;
+    localparam CAP_FUDGE = 128;
     localparam BCLK = SCLK*BOSR;
-    localparam CIC_STAGES = 1;
+    localparam CIC_STAGES = 2;
     localparam BOX_AVG = 8;
    
     // clock generator 
@@ -169,7 +169,17 @@ module adc_tb;
             //    t = t / (BOSR);
             //end
             t = real'(adc_output); 
-            adc_output_voltage = VCC * t / BOSR;
+            //adc_output_voltage = VCC * t / BOSR;
+            if(CIC_STAGES > 0) begin
+                adc_output_voltage = VCC * t;
+                for(i = 0; i < CIC_STAGES; i = i + 1) begin
+                    adc_output_voltage = adc_output_voltage / (BOSR);
+                end
+            end
+            else begin
+                adc_output_voltage = VCC * t/ BOSR;
+            end
+            
         end
     end
 
