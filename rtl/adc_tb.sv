@@ -4,11 +4,14 @@
 module adc_tb;
     
     localparam SCLK = 44800;
-    localparam BOSR = 256;
-    localparam WDTH = 16;
+    localparam BOSR = 1024;
+    //from Tom's site:
+    // width = 1 bit pdm + ceil(stages * log2(bosr)) = 1 + ceil(2*10) = 21,
+    // which kind of lines up with what I had to do here
+    localparam WDTH = 20;
     localparam CAP_FUDGE = 128;
     localparam BCLK = SCLK*BOSR;
-    localparam CIC_STAGES = 2;
+    localparam CIC_STAGES = 0;
     localparam BOX_AVG = 8;
    
     // clock generator 
@@ -24,13 +27,13 @@ module adc_tb;
     // analog input generator
     real VCC = 2.5;
     real FREQ = 440;
-    real SCALE = 0.9*VCC;
+    real SCALE = 0.98*VCC;
     int sample_num = 0;
     real analog_in;
     real dc_in = 1.25;
 
     always @(posedge clk) begin
-        analog_in = (SCALE/2) + (SCALE/4)*$cos(2*3.14*FREQ*sample_num/BCLK); 
+        analog_in = (VCC/2) + (SCALE/2)*$cos(2*3.14*FREQ*sample_num/BCLK); 
         sample_num = sample_num + 1;
     end
 

@@ -68,16 +68,9 @@ if(CIC_STAGES == 0) begin
 end
 else begin
     bit [WDTH-1:0] cic_int [CIC_STAGES-1:0] = '{default:0};
-    bit [WDTH-1:0] cic_int_dly [CIC_STAGES-1:0] = '{default:0};
     bit [WDTH-1:0] cic_dec [CIC_STAGES-1:0] = '{default:0};
     bit [WDTH-1:0] cic_dec_dly [CIC_STAGES-1:0] = '{default:0};
     
-    wire [WDTH-1:0] cic_int0, cic_int1, cic_dec0, cic_dec1;
-    assign cic_int0 = cic_int[0];
-    assign cic_int1 = cic_int[1];
-    assign cic_dec0 = cic_dec[0];
-    assign cic_dec1 = cic_dec[1];
-
     bit [WDTH-1:0] ccnt = 0;
 
     bit [$clog2(BOSR)-1:0] dec_cnt = 0;
