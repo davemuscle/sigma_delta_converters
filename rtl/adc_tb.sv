@@ -1,18 +1,25 @@
 
 `timescale 1 ns / 1 ns
 
+// Test bench used for quick ADC smoketest
+
 module adc_tb;
     
     localparam SCLK = 44800;
     localparam BOSR = 256;
+    localparam STGS = 2;
+    localparam WDTH = 2 + $ceil(STGS * $clog2(BOSR));
+
+    initial begin
+        $display("Calculated %-d for ADC calculation width", WDTH);
+    end
+
     //from Tom's site:
     // width = 1 bit pdm + ceil(stages * log2(bosr)) = 1 + ceil(2*10) = 21,
     // which kind of lines up with what I had to do here
-    localparam WDTH = 20;
-    localparam ADC_WDTH = 20;
+
     localparam CAP_FUDGE = 128;
     localparam BCLK = SCLK*BOSR;
-    localparam CIC_STAGES = 2;
    
     // clock generator 
     localparam CLK_NS = 10**9 / (BCLK * 2);
@@ -46,7 +53,7 @@ module adc_tb;
 
     initial begin: file_input
         int fdi;
-        fdi = $fopen("adc_input.txt", "w");
+        fdi = $fopen("adc_tb_input.txt", "w");
         forever begin
             @(posedge clk);
             if(inp_valid)
@@ -64,9 +71,11 @@ module adc_tb;
 
         //charge on capacitor is proportional to voltage stored
         //taken from Lattice example
+        //CAP_FUDGE chosen empirically, in HW this matches the impedance
         increase = (VCC - lvds_pin_n) / CAP_FUDGE;
         decrease = (lvds_pin_n) / CAP_FUDGE;
 
+        //external integrator circuit
         if(adc_fb_pin) begin
             lvds_pin_n <= lvds_pin_n + increase;
         end
@@ -74,6 +83,7 @@ module adc_tb;
             lvds_pin_n <= lvds_pin_n - decrease;
         end
 
+        //model lvds pin
         if(lvds_pin_p > lvds_pin_n) begin
             adc_lvds_pin <= 1;
         end
@@ -82,17 +92,17 @@ module adc_tb;
         end
     end
 
-    bit [ADC_WDTH-1:0] adc_output;
+    bit [WDTH-1:0] adc_output;
     bit adc_valid;
 
     // instantiate adc
     sigma_delta_adc #(
         .BOSR(BOSR),
-        .WDTH(WDTH),
-        .CIC_STAGES(CIC_STAGES),
-        .ADC_WDTH(ADC_WDTH)
+        .STGS(STGS),
+        .WDTH(WDTH)
     ) dut (
         .clk(clk),
+        .rst(1'b0),
         .adc_lvds_pin(adc_lvds_pin),
         .adc_fb_pin(adc_fb_pin),
         .adc_output(adc_output),
@@ -108,7 +118,10 @@ module adc_tb;
         if(adc_valid) begin
             t = real'(adc_output); 
             adc_output_voltage = VCC * t;
-            for(i = 0; i < CIC_STAGES; i = i + 1) begin
+            adc_output_voltage = t;
+            if(t >= (2**WDTH-1))
+                adc_output_voltage = 0;
+            for(i = 0; i < STGS; i = i + 1) begin
                 adc_output_voltage = adc_output_voltage / (BOSR);
             end
         end
@@ -119,7 +132,7 @@ module adc_tb;
         int t, fdo;
         $dumpfile("dump.vcd");
         $dumpvars;
-        fdo = $fopen("adc_output.txt", "w");
+        fdo = $fopen("adc_tb_output.txt", "w");
         for(t = 0; t < 256; t = t + 1) begin
             @(posedge adc_valid) begin
                 $fdisplay(fdo, "%f", adc_output_voltage);
