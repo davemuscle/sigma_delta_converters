@@ -6,7 +6,6 @@ files = ['./tb_dumps/sigma_delta_adc_tb_input.txt', './tb_dumps/sigma_delta_adc_
 arr = [[],[]]
 file = 0
 for x in files:
-    figure(x)
     with open(x) as f:
         lines = f.readlines()
     cnt = 0
@@ -21,4 +20,5 @@ for i in range(file):
     axs[i].plot(arr[i])
     axs[i].set_title(files[i])
 
+tight_layout()
 show()
