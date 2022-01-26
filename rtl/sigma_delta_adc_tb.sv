@@ -3,7 +3,7 @@
 
 // Test bench used for quick ADC smoketest
 
-module adc_tb;
+module sigma_delta_adc_tb;
     
     localparam SCLK = 44800;
     localparam BOSR = 256;
@@ -53,7 +53,7 @@ module adc_tb;
 
     initial begin: file_input
         int fdi;
-        fdi = $fopen("./tb_signals/adc_tb_input.txt", "w");
+        fdi = $fopen("sigma_delta_adc_tb_input.txt", "w");
         forever begin
             @(posedge clk);
             if(inp_valid)
@@ -132,7 +132,7 @@ module adc_tb;
         int t, fdo;
         $dumpfile("dump.vcd");
         $dumpvars;
-        fdo = $fopen("./tb_signals/adc_tb_output.txt", "w");
+        fdo = $fopen("sigma_delta_adc_tb_output.txt", "w");
         for(t = 0; t < 256; t = t + 1) begin
             @(posedge adc_valid) begin
                 $fdisplay(fdo, "%f", adc_output_voltage);
@@ -143,4 +143,4 @@ module adc_tb;
     end
 
 
-endmodule: adc_tb
+endmodule: sigma_delta_adc_tb
