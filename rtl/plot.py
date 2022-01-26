@@ -1,7 +1,9 @@
 #!/usr/bin/python3
-
+import os
+import glob
 from matplotlib.pyplot import *
-for x in ["adc_tb_input.txt", "adc_tb_output.txt"]:
+files = glob.glob("./tb_signals/adc_tb_*.txt")
+for x in files:
     figure(x)
     with open(x) as f:
         lines = f.readlines()
