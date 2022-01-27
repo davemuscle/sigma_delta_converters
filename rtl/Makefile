@@ -15,11 +15,14 @@ sim: clean
 	mv *adc_tb*.txt tb_dumps/.
 	./plot.py
 
+VBOSR = 25
+
 .PHONY: freq
 freq:
 	echo "Verilator Target"
-	verilator --trace -Wall --cc $(ver_list) --exe $(src_list) --build
-	./obj_dir/Vsigma_delta_adc
+	export BOSR=$(VBOSR); \
+	verilator --trace -Wall --cc --exe $(ver_list) $(src_list) -GBOSR=$(VBOSR) --build; \
+	./obj_dir/Vsigma_delta_adc;
 
 .PHONY: lint
 lint:
