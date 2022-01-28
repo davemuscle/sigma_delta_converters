@@ -7,8 +7,33 @@ class Harness {
 public:
     Vsigma_delta_adc *dut = new Vsigma_delta_adc;
     VerilatedVcdC *m_trace = new VerilatedVcdC;
+
+    //harness parameters for data generation:
+    float vcc;
+    float scale;
+    int bosr;
+    int sclk;
+    int bclk;
     uint64_t glb_cycles = 0;
     uint64_t events = 0;
+
+    //class init
+    Harness(void){
+        const char *env_VCC  = std::getenv("VCC");
+        const char *env_BOSR = std::getenv("BOSR");
+        const char *env_SCLK = std::getenv("SCLK");
+
+        this->vcc = std::stof(env_VCC);
+        this->bosr = std::stol(env_BOSR);
+        this->sclk = std::stol(env_SCLK);
+
+        printf("\nMaking sure environment variables get parsed correctly:\n");
+        printf("  VCC=%f, BOSR=%d, SCLK=%d\n", this->vcc, this->bosr, this->sclk);
+        printf("\n");
+
+        this->bclk = this->bosr * this->sclk;
+        this->scale = 0.99;
+    }
 
     //handler for waveform tracing
     void trace(std::string cmd = "dump"){
@@ -45,12 +70,12 @@ public:
             }
         }
     }
-    float vcc;
-    float scale;
+
     //generate sine input to dut as a pulse density modulated signal
-    int generate_input(int start, int freq){
-        //float analog = cos((2*M_PI*freq*glb->cycles)/);
-        return 0;
+    void generate_input(int freq){
+        float analog = cos((2*M_PI*freq*this->glb_cycles)/this->bclk);
+        analog = (this->vcc/2) + ((this->scale * this->vcc/2) * analog);
+        this->dut->adc_input = analog;
     }
 
 
@@ -69,11 +94,7 @@ int main(int argc, char **argv, char **env){
     Verilated::traceEverOn(true);
 
     Harness *hns = new Harness;
-    //printf("CPP BOSR: %d\n", hns->dut->var_BOSR);
-    //printf("CPP BOSR: %d\n", hns->dut->VCC);
-    const char *p = std::getenv("BOSR");
-    printf("\n\n\n");
-    printf("got BOSR: %s\n", p);
+
     hns->trace("start");
 
     // tb
@@ -84,20 +105,12 @@ int main(int argc, char **argv, char **env){
 
         hns->clock();
         hns->reset(5, 10);
-        hns->generate_input(0, 1);
+        hns->generate_input(440);
         hns->trace();
 
     } 
     
     hns->glb_cycles = 0;
-
-    while(hns->glb_cycles < MAX_SIM_TIME){
-        hns->clock();
-        hns->reset(5, 10);
-        hns->trace();
-    }
-
-
     hns->trace("finish");
 
 }
