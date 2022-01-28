@@ -1,5 +1,4 @@
 #include "Vsigma_delta_adc.h"
-#include "Vsigma_delta_adc_sigma_delta_adc.h"
 
 #include <verilated.h>
 #include <verilated_vcd_c.h>
