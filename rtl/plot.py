@@ -2,23 +2,23 @@
 import os
 import glob
 from matplotlib.pyplot import *
-files = ['./tb_dumps/sigma_delta_adc_tb_input.txt', './tb_dumps/sigma_delta_adc_tb_output.txt']
-arr = [[],[]]
+path = "./tb_dumps";
+files = sorted(glob.glob('./tb_dumps/*.txt'))
+num_files = len(files)
+arr = []
 file = 0
+cnt = 0
+fig, axs = subplots(num_files,1)
 for x in files:
-    with open(x) as f:
-        lines = f.readlines()
-    cnt = 0
-    for line in lines:
-        cnt = cnt + 1
+    arr.clear()
+    file = open(x, "r")
+    for line in file.readlines():
         line = line.strip()
-        arr[file].append(float(line))
-    file = file + 1
-
-fig, axs = subplots(2,1)
-for i in range(file):
-    axs[i].plot(arr[i])
-    axs[i].set_title(files[i])
+        arr.append(float(line))
+    file.close()
+    axs[cnt].plot(arr)
+    axs[cnt].set_title(x)
+    cnt = cnt + 1
 
 tight_layout()
 show()

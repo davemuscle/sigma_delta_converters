@@ -3,6 +3,9 @@
 #include <verilated.h>
 #include <verilated_vcd_c.h>
 
+#include <iostream>
+#include <fstream>
+
 class Harness {
 public:
     Vsigma_delta_adc *dut = new Vsigma_delta_adc;
@@ -71,21 +74,26 @@ public:
         }
     }
 
-    //generate sine input to dut as a pulse density modulated signal
+    //generate sine input to dut
     void generate_input(int freq){
+        //cosine wave
         float analog = cos((2*M_PI*freq*this->glb_cycles)/this->bclk);
+        //add dc offset and scale to voltage
         analog = (this->vcc/2) + ((this->scale * this->vcc/2) * analog);
         this->dut->adc_input = analog;
     }
 
+    //open file pointer and write into it, data is saved as a float
+    void save_stimulus(const char *fp, float val){
+        std::ofstream file;
+        file.open(fp, std::ios_base::app);
+        file << val << "\n";
+        file.close();
+    }
 
 };
 
 const int MAX_SIM_TIME = 50;
-
-
-//#define BOSR 256
-#define TEST 100
 
 int main(int argc, char **argv, char **env){
 
@@ -97,20 +105,32 @@ int main(int argc, char **argv, char **env){
 
     hns->trace("start");
 
-    // tb
-    
+    // put full scale to let integrators build up
     hns->glb_cycles = 0;
-
-    while(hns->glb_cycles < MAX_SIM_TIME){
-
+    hns->generate_input(1);
+    for(uint16_t i = 0; i < 65535; i++){
         hns->clock();
-        hns->reset(5, 10);
-        hns->generate_input(440);
-        hns->trace();
-
-    } 
-    
+    }
     hns->glb_cycles = 0;
+
+    // tb
+    int freq [4] = {440, 880, 1000, 2000}; 
+    for(uint8_t i = 0; i < 4; i++){
+        int per = hns->bosr * 1 * hns->sclk / freq[i];
+        printf("per: %d\n", per);
+        hns->glb_cycles = 0;
+        while(hns->glb_cycles < per){
+            hns->clock();
+            hns->generate_input(freq[i]);
+            hns->save_stimulus("./tb_dumps/verilator_adc_tb_input.txt", hns->dut->adc_input);
+            if(hns->dut->adc_valid){
+                hns->save_stimulus("./tb_dumps/verilator_adc_tb_output.txt", (float)hns->dut->adc_output);
+            }
+            hns->trace();
+
+        } 
+    }
+    
     hns->trace("finish");
 
 }

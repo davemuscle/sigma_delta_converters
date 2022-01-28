@@ -45,7 +45,7 @@ module sigma_delta_adc_tb;
 
     initial begin: file_input
         int fdi;
-        fdi = $fopen("sigma_delta_adc_tb_input.txt", "w");
+        fdi = $fopen("./tb_dumps/modelsim_adc_tb_input.txt", "w");
         forever begin
             @(posedge clk);
             if(sample_num > 0)
@@ -82,11 +82,11 @@ module sigma_delta_adc_tb;
             t = real'(adc_output); 
             adc_output_voltage = VCC * t;
             adc_output_voltage = t;
-            if(t >= (2**WDTH-1))
-                adc_output_voltage = 0;
-            for(i = 0; i < STGS; i = i + 1) begin
-                adc_output_voltage = adc_output_voltage / (BOSR);
-            end
+            //if(t >= (2**WDTH-1))
+            //    adc_output_voltage = 0;
+            //for(i = 0; i < STGS; i = i + 1) begin
+            //    adc_output_voltage = adc_output_voltage / (BOSR);
+            //end
         end
     end
 
@@ -95,7 +95,7 @@ module sigma_delta_adc_tb;
         int t, fdo;
         $dumpfile("dump.vcd");
         $dumpvars;
-        fdo = $fopen("sigma_delta_adc_tb_output.txt", "w");
+        fdo = $fopen("./tb_dumps/modelsim_adc_tb_output.txt", "w");
         for(t = 0; t < NUM_OUTPUT_SAMPLES; t = t + 1) begin
             @(posedge adc_valid) begin
                 $fdisplay(fdo, "%f", adc_output_voltage);
