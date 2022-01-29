@@ -17,7 +17,7 @@ module sigma_delta_adc_tb;
     localparam BCLK = SCLK*BOSR;
     localparam FREQ = 440;
     localparam SCALE = 0.99*VCC;
-    localparam NUM_OUTPUT_SAMPLES = 256;
+    localparam NUM_OUTPUT_SAMPLES = 1024;
 
     initial begin
         $display("Calculated %-d for ADC calculation width", WDTH);
@@ -58,7 +58,8 @@ module sigma_delta_adc_tb;
         $fclose(fdi);
     end
 
-    bit [WDTH-1:0] adc_output;
+    real adc_u_output;
+    real adc_s_output;
     bit adc_valid;
 
     // instantiate adc
@@ -72,41 +73,28 @@ module sigma_delta_adc_tb;
         .clk(clk),
         .rst(1'b0),
         .adc_input(analog_in),
-        .adc_output(adc_output),
+        .adc_u_output(adc_u_output),
+        .adc_s_output(adc_s_output),
         .adc_valid(adc_valid)
     );
 
-    real adc_output_voltage = 0.0;
-
-    always @(posedge clk) begin: out_convert
-        int i;
-        real t;
-        real f [51:0];
-        if(adc_valid) begin
-            t = real'(adc_output); 
-            adc_output_voltage = VCC * t;
-            adc_output_voltage = t;
-            //if(t >= (2**WDTH-1))
-            //    adc_output_voltage = 0;
-            //for(i = 0; i < STGS; i = i + 1) begin
-            //    adc_output_voltage = adc_output_voltage / (BOSR);
-            //end
-        end
-    end
-
     // stim
     initial begin: stim
-        int t, fdo;
+        int t, fdou, fdos;
         $dumpfile("dump.vcd");
         $dumpvars;
-        fdo = $fopen("./tb_dumps/modelsim_adc_tb_output.txt", "w");
-        $fdisplay(fdo, "index,decimal out");
+        fdou = $fopen("./tb_dumps/modelsim_adc_tb_unsigned_output.txt", "w");
+        fdos = $fopen("./tb_dumps/modelsim_adc_tb_signed_output.txt", "w");
+        $fdisplay(fdou, "index,decimal out");
+        $fdisplay(fdos, "index,decimal out");
         for(t = 0; t < NUM_OUTPUT_SAMPLES; t = t + 1) begin
             @(posedge adc_valid) begin
-                $fdisplay(fdo, "%0.f,%f", t, adc_output_voltage);
+                $fdisplay(fdou, "%0.f,%f", t, adc_u_output);
+                $fdisplay(fdos, "%0.f,%f", t, adc_s_output);
             end
         end
-        $fclose(fdo);
+        $fclose(fdou);
+        $fclose(fdos);
         $finish;
     end
 

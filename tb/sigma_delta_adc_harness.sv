@@ -10,7 +10,8 @@ module sigma_delta_adc_harness #(
     input bit clk,
     input bit rst,
     input real adc_input,
-    output bit [WDTH-1:0] adc_output,
+    output real adc_s_output,
+    output real adc_u_output,
     output bit adc_valid
 
 );
@@ -50,6 +51,14 @@ module sigma_delta_adc_harness #(
         end
     end
 
+    bit unsigned [WDTH-1:0] adc_bu_output;
+    bit signed   [WDTH-1:0] adc_bs_output;
+
+    always_comb begin
+        adc_u_output = real'(adc_bu_output);
+        adc_s_output = real'(adc_bs_output);
+    end
+
     // instantiate adc
     sigma_delta_adc #(
         .BOSR(BOSR),
@@ -60,7 +69,8 @@ module sigma_delta_adc_harness #(
         .rst(rst),
         .adc_lvds_pin(adc_lvds_pin),
         .adc_fb_pin(adc_fb_pin),
-        .adc_output(adc_output),
+        .adc_u_output(adc_bu_output),
+        .adc_s_output(adc_bs_output),
         .adc_valid(adc_valid)
     );
 

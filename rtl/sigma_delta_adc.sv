@@ -13,7 +13,8 @@ module sigma_delta_adc #(
     input bit adc_lvds_pin, // connect to analog input
     output bit adc_fb_pin,  // connect to integrator
 
-    output bit [WDTH-1:0] adc_output, //digital output
+    output bit   signed [WDTH-1:0] adc_s_output, //digital output signed
+    output bit unsigned [WDTH-1:0] adc_u_output, //digital output unsigned
     output bit adc_valid              //signals valid output
 
 );
@@ -97,10 +98,34 @@ module sigma_delta_adc #(
 
     end
 
-    //FIR Filter for optional extra decimation + smoothing
+    //DC Removal
+    bit signed [WDTH-1:0] dc_yn;
+    bit signed [WDTH-1:0] dc_yn_reg;
+    bit dc_vld;
+    bit unsigned [WDTH-1:0] dc_xn;
+
     always_ff @(posedge clk) begin
-        adc_output <= cic_out;
-        adc_valid  <= cic_vld;
+        // alpha = 0.95
+        // choose lower values of alpha (lower shift)
+        // this will avoid attenuation of lower freqs
+        dc_yn <= cic_out - dc_yn_reg;
+        dc_vld <= cic_vld;
+        if(cic_vld) begin
+            dc_yn_reg <= (dc_yn >>> 7) + dc_yn_reg;
+        end
+        if(rst) begin
+            dc_vld <= 0;
+            dc_yn <= 0;
+            dc_yn_reg <= 0;
+        end
+        dc_xn <= cic_out;
+    end
+
+    //Assign Output
+    always_ff @(posedge clk) begin
+        adc_u_output <= dc_xn;
+        adc_s_output <= dc_yn;
+        adc_valid  <= dc_vld;
     end
 
 

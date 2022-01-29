@@ -143,7 +143,7 @@ void print_load_bar(int freq_num, int freq_total, int per_num, int per_total){
 }
 
 //sweep frequency and generate amplitude/phase plot for freq response
-void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int num_per, bool log){
+void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int num_per, bool log, bool is_signed){
     int freq[num_steps];
     freq[0] = start_freq;
     freq[num_steps-1] = end_freq;
@@ -201,9 +201,9 @@ void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int nu
     file << "frequency (Hz), Gain(dB)\n";
     file.close();
 
-    file.open(phase_file, std::ios_base::app);
-    file << "frequency (Hz), Phase(deg)\n";
-    file.close();
+    //file.open(phase_file, std::ios_base::app);
+    //file << "frequency (Hz), Phase(deg)\n";
+    //file.close();
 
     //loop through frequencies to plot
     for(int i = 0; i < num_steps; i++){
@@ -225,8 +225,15 @@ void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int nu
                     hns->generate_input(freq[i]);
                     //when output is ready
                     if(hns->dut->adc_valid){
+                        //choose between signed or unsigned output from the adc
+                        float adc_result;
+                        if(is_signed){
+                            adc_result = hns->dut->adc_s_output;
+                        }else{
+                            adc_result = hns->dut->adc_u_output;
+                        }
                         //convert to output voltage to match input
-                        float adc_result = hns->vcc * hns->dut->adc_output / pow(hns->bosr, hns->stgs);
+                        adc_result = hns->vcc * adc_result / pow(hns->bosr, hns->stgs);
                         //record the amplitude for the input and scaled output at this frequency
                         record_amplitude(hns->dut->adc_input, &in_amp);
                         record_amplitude(adc_result, &out_amp);
@@ -257,7 +264,7 @@ void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int nu
         phase = phase * 360.0f / sclk_per_len; 
         //write amplitude and phase to a file
         save_stimulus(gain_file, freq[i], gain);
-        save_stimulus(phase_file, freq[i], phase);
+        //save_stimulus(phase_file, freq[i], phase);
     }
     print_load_bar(num_steps, num_steps, 0, num_per);
     printf("\n");
@@ -277,12 +284,19 @@ int main(int argc, char **argv, char **env){
     int NUM_FREQ   = std::stol(std::getenv("NUM_FREQ"));
     int NUM_PER    = std::stol(std::getenv("NUM_PER"));
     bool DLOG      = std::stol(std::getenv("LOG"));
+    bool DSIGNED   = std::stol(std::getenv("SIGNED"));
 
     printf("Making sure env variables for main got parsed too:\n");
-    printf("  START_FREQ = %d, END_FREQ = %d, NUM_FREQ = %d, NUM_PER = %d, LOG=%d\n", START_FREQ, END_FREQ, NUM_FREQ, NUM_PER, DLOG);
+    printf("  ");
+    printf("START_FREQ = %d, ", START_FREQ);
+    printf("END_FREQ = %d, ", END_FREQ);
+    printf("NUM_FREQ = %d, ", NUM_FREQ);
+    printf("NUM_PER = %d, ", NUM_PER);
+    printf("LOG=%d, ", DLOG);
+    printf("SIGNED=%d\n", DSIGNED);
     printf("\n");
 
-    run_freqz(hns, START_FREQ, END_FREQ, NUM_FREQ, NUM_PER, DLOG);
+    run_freqz(hns, START_FREQ, END_FREQ, NUM_FREQ, NUM_PER, DLOG, DSIGNED);
 
     hns->trace("finish");
 

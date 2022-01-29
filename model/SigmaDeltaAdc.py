@@ -40,8 +40,8 @@ class SigmaDeltaAdc:
 
     _bosr = 256
     _sclk = 44800
-    _num_samples = 250
-    _freq = 440
+    _num_samples = 4000
+    _freq = 110
 
     def __init__(self, vcc):
         self._vcc = vcc
@@ -66,9 +66,9 @@ class SigmaDeltaAdc:
         N, beta = scipy.signal.kaiserord(ripple_db, width)
         cutoff_hz = 20000
         taps = scipy.signal.firwin(N, cutoff_hz/nyq_rate, window=('kaiser', beta))
-        print("%d taps: " % N);
-        for x in taps:
-            print("  " + str(float(x)));
+        #print("%d taps: " % N);
+        #for x in taps:
+        #    print("  " + str(float(x)));
 
         # CIC filter
         cic_stages = 1
@@ -93,11 +93,23 @@ class SigmaDeltaAdc:
 
         # Low-pass final data
         #self._digital_out = scipy.signal.lfilter(taps, 1.0, bits_filtered) 
-        self._digital_out = bits_filtered
 
-        # Scale for digital values
+        # 
+
+        # DC Removal
+        yn = 0
+        yn_mul = 0
+        yn_reg = 0
+        xn_reg = 0
         for n in range(self._num_samples):
-            self._digital_out[n] = self._digital_out[n] * self._bosr
+            #self._digital_out[n] = bits_filtered[n] - xn_reg + 0.995*yn_reg
+            #xn_reg = bits_filtered[n]
+            #yn_reg = self._digital_out[n]
+
+            yn = bits_filtered[n] - yn_reg
+            yn_mul = yn * 0.005
+            self._digital_out[n] = self._vcc * yn
+            yn_reg = yn_mul + yn_reg
 
         debug = 0
 
