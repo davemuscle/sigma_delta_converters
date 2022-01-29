@@ -114,30 +114,20 @@ struct amp_data {
 void reset_amplitude(struct amp_data *amp_stru){
     amp_stru->idx = 0;
     amp_stru->lli = 0;
-    amp_stru->low = 0;
+    amp_stru->low = 0x7FFFFFFF;
     amp_stru->high = 0;
     amp_stru->res = 0;
-    amp_stru->d1 = 0;
-    amp_stru->d2 = 0;
-    amp_stru->d3 = 0;
 }
 
 void record_amplitude(float sample, struct amp_data *amp_stru){
-    //delay
-    amp_stru->d3 = amp_stru->d2;
-    amp_stru->d2 = amp_stru->d1;
-    amp_stru->d1 = sample;
-    //local low
-    if((amp_stru->d3 > amp_stru->d2) && (amp_stru->d1 > amp_stru->d2)){
-        amp_stru->low = amp_stru->d2;
-        //hold onto the current idx for phase
+    //update low value
+    if(sample < amp_stru->low){
+        amp_stru->low = sample;
         amp_stru->lli = amp_stru->idx;
-        //printf("\nlocal low: %f\n", amp_stru->idx);
     }
-    //local high
-    if((amp_stru->d3 < amp_stru->d2) && (amp_stru->d1 < amp_stru->d2)){
-        amp_stru->high = amp_stru->d2;
-        //printf("\nlocal high: %f\n", amp_stru->idx);
+    //update high value
+    if(sample > amp_stru->high){
+        amp_stru->high = sample;
     }
     //record result
     amp_stru->res = amp_stru->high - amp_stru->low;
@@ -201,7 +191,6 @@ void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int nu
         for(int per = 0; per < num_per; per++){
             //loading bar, will kill other prints probably
             print_load_bar(i, num_steps, per, num_per);
-            //if((per == num_per - 1) && (i == num_steps-1)) per_len *= 8;
             //loop through output samples for 1 period
             for(int tick = 0; tick < per_len; tick++){
                 hns->clock();
@@ -242,7 +231,7 @@ int main(int argc, char **argv, char **env){
 
     hns->trace("start");
 
-    run_freqz(hns, 440, 20000, 20, 32, true);
+    run_freqz(hns, 220, 20000, 40, 32, true);
 
     hns->trace("finish");
 
