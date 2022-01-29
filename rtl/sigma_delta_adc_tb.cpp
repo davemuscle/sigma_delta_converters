@@ -240,7 +240,17 @@ int main(int argc, char **argv, char **env){
 
     hns->trace("start");
 
-    run_freqz(hns, 220, 20000, 10, 32, true);
+    int START_FREQ = std::stof(std::getenv("START_FREQ"));
+    int END_FREQ   = std::stol(std::getenv("END_FREQ"));
+    int NUM_FREQ   = std::stol(std::getenv("NUM_FREQ"));
+    int NUM_PER    = std::stol(std::getenv("NUM_PER"));
+    bool LOG       = std::stol(std::getenv("LOG"));
+
+    printf("Making sure env variables for main got parsed too:\n");
+    printf("  START_FREQ = %d, END_FREQ = %d, NUM_FREQ = %d, NUM_PER = %d, LOG=%d\n", START_FREQ, END_FREQ, NUM_FREQ, NUM_PER, LOG);
+    printf("\n");
+
+    run_freqz(hns, START_FREQ, END_FREQ, NUM_FREQ, NUM_PER, LOG);
 
     hns->trace("finish");
 
