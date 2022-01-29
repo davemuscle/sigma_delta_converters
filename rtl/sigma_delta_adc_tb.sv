@@ -15,7 +15,7 @@ module sigma_delta_adc_tb;
     localparam VCC = 2.5;
     localparam CAP_FUDGE = 128;
     localparam BCLK = SCLK*BOSR;
-    localparam FREQ = 440;
+    localparam FREQ = 20000;
     localparam SCALE = 0.99*VCC;
     localparam NUM_OUTPUT_SAMPLES = 256;
 
