@@ -2,7 +2,7 @@
 .PHONY: sim
 sim: clean_plot
 	echo "Simulation Target"
-	vlog sigma_delta_adc.sv sigma_delta_adc_harness.sv sigma_delta_adc_tb.sv
+	vlog ../rtl/sigma_delta_adc.sv sigma_delta_adc_harness.sv sigma_delta_adc_tb.sv
 	vsim -c -do "run -all" sigma_delta_adc_tb
 
 # verilator frequency response sim parameters
@@ -25,7 +25,7 @@ freq: clean_plot
 	export VCC=$(G_VCC); export BOSR=$(G_BOSR); export STGS=$(G_STGS); \
 	export SCLK=$(D_SCLK); export START_FREQ=$(D_START_FREQ); export END_FREQ=$(D_END_FREQ); \
 	export NUM_FREQ=$(D_NUM_FREQ); export NUM_PER=$(D_NUM_PER); export LOG=$(D_LOG); \
-	verilator --trace -Wall --cc --exe sigma_delta_adc_tb.cpp sigma_delta_adc.sv sigma_delta_adc_harness.sv --build \
+	verilator --trace -Wall --cc --exe sigma_delta_adc_tb.cpp ../rtl/sigma_delta_adc.sv sigma_delta_adc_harness.sv --build \
 	-GVCC=$(G_VCC) -GBOSR=$(G_BOSR) -GSTGS=$(G_STGS) -GWDTH=$(G_WDTH); \
 	./obj_dir/Vsigma_delta_adc;
 
@@ -35,7 +35,7 @@ plot:
 
 .PHONY: lint
 lint:
-	verilator -Wall --lint-only sigma_delta_adc.sv
+	verilator -Wall --lint-only ../rtl/sigma_delta_adc.sv sigma_delta_adc_harness.sv
 
 .PHONY: gui
 gui:
