@@ -5,7 +5,8 @@ module sigma_delta_adc_harness #(
     parameter CAP_FUDGE = 128,
     parameter BOSR = 256,
     parameter STGS = 2,
-    parameter WDTH = 2
+    parameter WDTH = 2,
+    parameter DC_BLOCK_SHIFT = 7
 )(
     input bit clk,
     input bit rst,
@@ -63,7 +64,8 @@ module sigma_delta_adc_harness #(
     sigma_delta_adc #(
         .BOSR(BOSR),
         .STGS(STGS),
-        .WDTH(WDTH)
+        .WDTH(WDTH),
+        .DC_BLOCK_SHIFT(DC_BLOCK_SHIFT)
     ) dut (
         .clk(clk),
         .rst(rst),

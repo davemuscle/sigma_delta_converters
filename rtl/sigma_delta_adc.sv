@@ -5,7 +5,8 @@
 module sigma_delta_adc #(
     parameter int BOSR = 256,
     parameter int STGS = 2,
-    parameter int WDTH = 16
+    parameter int WDTH = 16,
+    parameter int DC_BLOCK_SHIFT = 7
 )(
     input bit clk,
     input bit rst, //reset for optional power saving
@@ -111,7 +112,7 @@ module sigma_delta_adc #(
         dc_yn <= cic_out - dc_yn_reg;
         dc_vld <= cic_vld;
         if(cic_vld) begin
-            dc_yn_reg <= (dc_yn >>> 7) + dc_yn_reg;
+            dc_yn_reg <= (dc_yn >>> DC_BLOCK_SHIFT) + dc_yn_reg;
         end
         if(rst) begin
             dc_vld <= 0;

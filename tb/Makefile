@@ -10,6 +10,7 @@ G_VCC=2.5
 G_BOSR=256
 G_STGS=2
 G_WDTH=24
+G_DC_BLOCK_SHIFT=7
 
 D_SCLK=48000
 D_START_FREQ=220
@@ -23,11 +24,22 @@ D_SIGNED=1
 freq: clean_plot
 	echo "Verilator Target"
 	rm -f ./obj_dir/Vsigma_delta_adc
-	export VCC=$(G_VCC); export BOSR=$(G_BOSR); export STGS=$(G_STGS); \
-	export SCLK=$(D_SCLK); export START_FREQ=$(D_START_FREQ); export END_FREQ=$(D_END_FREQ); \
-	export NUM_FREQ=$(D_NUM_FREQ); export NUM_PER=$(D_NUM_PER); export LOG=$(D_LOG); export SIGNED=$(D_SIGNED); \
+	  export VCC=$(G_VCC); \
+	  export BOSR=$(G_BOSR); \
+	  export STGS=$(G_STGS); \
+	  export SCLK=$(D_SCLK); \
+	  export START_FREQ=$(D_START_FREQ); \
+	  export END_FREQ=$(D_END_FREQ); \
+	  export NUM_FREQ=$(D_NUM_FREQ); \
+	  export NUM_PER=$(D_NUM_PER); \
+	  export LOG=$(D_LOG); \
+	  export SIGNED=$(D_SIGNED); \
 	verilator --trace -Wall --cc --exe sigma_delta_adc_tb.cpp ../rtl/sigma_delta_adc.sv sigma_delta_adc_harness.sv --build \
-	-GVCC=$(G_VCC) -GBOSR=$(G_BOSR) -GSTGS=$(G_STGS) -GWDTH=$(G_WDTH); \
+	  -GVCC=$(G_VCC) \
+	  -GBOSR=$(G_BOSR) \
+	  -GSTGS=$(G_STGS) \
+	  -GWDTH=$(G_WDTH) \
+	  -GDC_BLOCK_SHIFT=$(G_DC_BLOCK_SHIFT); \
 	./obj_dir/Vsigma_delta_adc;
 
 .PHONY: plot
