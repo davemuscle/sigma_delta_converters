@@ -7,9 +7,9 @@ sim: clean_plot
 
 # verilator frequency response sim parameters
 G_VCC=2.5
-G_BOSR=256
-G_STGS=2
-G_WDTH=24
+G_OVERSAMPLE_RATE=256
+G_CIC_STAGES=2
+G_ADC_BITLEN=24
 G_DC_BLOCK_SHIFT=7
 
 D_SCLK=48000
@@ -25,8 +25,8 @@ freq: clean_plot
 	echo "Verilator Target"
 	rm -f ./obj_dir/Vsigma_delta_adc
 	  export VCC=$(G_VCC); \
-	  export BOSR=$(G_BOSR); \
-	  export STGS=$(G_STGS); \
+	  export OVERSAMPLE_RATE=$(G_OVERSAMPLE_RATE); \
+	  export CIC_STAGES=$(G_CIC_STAGES); \
 	  export SCLK=$(D_SCLK); \
 	  export START_FREQ=$(D_START_FREQ); \
 	  export END_FREQ=$(D_END_FREQ); \
@@ -36,9 +36,9 @@ freq: clean_plot
 	  export SIGNED=$(D_SIGNED); \
 	verilator --trace -Wall --cc --exe sigma_delta_adc_tb.cpp ../rtl/sigma_delta_adc.sv sigma_delta_adc_harness.sv --build \
 	  -GVCC=$(G_VCC) \
-	  -GBOSR=$(G_BOSR) \
-	  -GSTGS=$(G_STGS) \
-	  -GWDTH=$(G_WDTH) \
+	  -GOVERSAMPLE_RATE=$(G_OVERSAMPLE_RATE) \
+	  -GCIC_STAGES=$(G_CIC_STAGES) \
+	  -GADC_BITLEN=$(G_ADC_BITLEN) \
 	  -GDC_BLOCK_SHIFT=$(G_DC_BLOCK_SHIFT); \
 	./obj_dir/Vsigma_delta_adc;
 

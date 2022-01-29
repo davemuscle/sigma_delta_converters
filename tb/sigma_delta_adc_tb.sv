@@ -6,21 +6,21 @@
 module sigma_delta_adc_tb;
     
     localparam SCLK = 44800;
-    localparam BOSR = 256;
-    localparam STGS = 2;
+    localparam OVERSAMPLE_RATE = 256;
+    localparam CIC_STAGES = 2;
     //from Tom's site:
     // width = 1 bit pdm + ceil(stages * log2(bosr)) = 1 + ceil(2*10) = 21,
     // which kind of lines up with what I had to do here
-    localparam WDTH = 2 + $ceil(STGS * $clog2(BOSR));
+    localparam ADC_BITLEN = 2 + $ceil(CIC_STAGES * $clog2(OVERSAMPLE_RATE));
     localparam VCC = 2.5;
     localparam CAP_FUDGE = 128;
-    localparam BCLK = SCLK*BOSR;
+    localparam BCLK = SCLK*OVERSAMPLE_RATE;
     localparam FREQ = 440;
     localparam SCALE = 0.99*VCC;
     localparam NUM_OUTPUT_SAMPLES = 1024;
 
     initial begin
-        $display("Calculated %-d for ADC calculation width", WDTH);
+        $display("Calculated %-d for ADC calculation width", ADC_BITLEN);
     end
 
     // clock generator 
@@ -66,9 +66,9 @@ module sigma_delta_adc_tb;
     sigma_delta_adc_harness #(
         .VCC(VCC),
         .CAP_FUDGE(CAP_FUDGE),
-        .BOSR(BOSR),
-        .STGS(STGS),
-        .WDTH(WDTH)
+        .OVERSAMPLE_RATE(OVERSAMPLE_RATE),
+        .CIC_STAGES(CIC_STAGES),
+        .ADC_BITLEN(ADC_BITLEN)
     ) dut (
         .clk(clk),
         .rst(1'b0),

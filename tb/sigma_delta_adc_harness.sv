@@ -3,9 +3,9 @@
 module sigma_delta_adc_harness #(
     parameter VCC  = 2.5,
     parameter CAP_FUDGE = 128,
-    parameter BOSR = 256,
-    parameter STGS = 2,
-    parameter WDTH = 2,
+    parameter OVERSAMPLE_RATE = 256,
+    parameter CIC_STAGES = 2,
+    parameter ADC_BITLEN = 2,
     parameter DC_BLOCK_SHIFT = 7
 )(
     input bit clk,
@@ -52,8 +52,8 @@ module sigma_delta_adc_harness #(
         end
     end
 
-    bit unsigned [WDTH-1:0] adc_bu_output;
-    bit signed   [WDTH-1:0] adc_bs_output;
+    bit unsigned [ADC_BITLEN-1:0] adc_bu_output;
+    bit signed   [ADC_BITLEN-1:0] adc_bs_output;
 
     always_comb begin
         adc_u_output = real'(adc_bu_output);
@@ -62,9 +62,9 @@ module sigma_delta_adc_harness #(
 
     // instantiate adc
     sigma_delta_adc #(
-        .BOSR(BOSR),
-        .STGS(STGS),
-        .WDTH(WDTH),
+        .OVERSAMPLE_RATE(OVERSAMPLE_RATE),
+        .CIC_STAGES(CIC_STAGES),
+        .ADC_BITLEN(ADC_BITLEN),
         .DC_BLOCK_SHIFT(DC_BLOCK_SHIFT)
     ) dut (
         .clk(clk),

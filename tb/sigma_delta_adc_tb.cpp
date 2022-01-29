@@ -24,17 +24,17 @@ public:
     //class init
     Harness(void){
         const char *env_VCC  = std::getenv("VCC");
-        const char *env_BOSR = std::getenv("BOSR");
+        const char *env_OVERSAMPLE_RATE = std::getenv("OVERSAMPLE_RATE");
         const char *env_SCLK = std::getenv("SCLK");
-        const char *env_STGS = std::getenv("STGS");
+        const char *env_CIC_STAGES = std::getenv("CIC_STAGES");
 
         this->vcc = std::stof(env_VCC);
-        this->bosr = std::stol(env_BOSR);
+        this->bosr = std::stol(env_OVERSAMPLE_RATE);
         this->sclk = std::stol(env_SCLK);
-        this->stgs = std::stol(env_STGS);
+        this->stgs = std::stol(env_CIC_STAGES);
 
         printf("\nMaking sure environment variables get parsed correctly:\n");
-        printf("  VCC=%f, BOSR=%d, SCLK=%d, STGS=%d\n", this->vcc, this->bosr, this->sclk, this->stgs);
+        printf("  VCC=%f, OVERSAMPLE_RATE=%d, SCLK=%d, CIC_STAGES=%d\n", this->vcc, this->bosr, this->sclk, this->stgs);
         printf("\n");
 
         this->bclk = this->bosr * this->sclk;
