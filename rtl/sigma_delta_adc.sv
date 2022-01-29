@@ -6,6 +6,7 @@ module sigma_delta_adc #(
     parameter int OVERSAMPLE_RATE = 256,
     parameter int CIC_STAGES = 2,
     parameter int ADC_BITLEN = 16,
+    parameter int SIGNED_OUTPUT = 1,
     parameter int DC_BLOCK_SHIFT = 7
 )(
     input bit clk,
@@ -14,8 +15,7 @@ module sigma_delta_adc #(
     input bit adc_lvds_pin, // connect to analog input
     output bit adc_fb_pin,  // connect to integrator
 
-    output bit   signed [ADC_BITLEN-1:0] adc_s_output, //digital output signed
-    output bit unsigned [ADC_BITLEN-1:0] adc_u_output, //digital output unsigned
+    output bit [ADC_BITLEN-1:0] adc_output, //digital output
     output bit adc_valid              //signals valid output
 
 );
@@ -99,35 +99,32 @@ module sigma_delta_adc #(
 
     end
 
-    //DC Removal
-    bit signed [ADC_BITLEN-1:0] dc_yn;
+    //DC Removal / Assign Output
+    bit signed [ADC_BITLEN-1:0] dc_yn; 
     bit signed [ADC_BITLEN-1:0] dc_yn_reg;
     bit dc_vld;
-    bit unsigned [ADC_BITLEN-1:0] dc_xn;
 
     always_ff @(posedge clk) begin
-        // alpha = 0.95
-        // choose lower values of alpha (lower shift)
-        // this will avoid attenuation of lower freqs
-        dc_yn <= cic_out - dc_yn_reg;
-        dc_vld <= cic_vld;
-        if(cic_vld) begin
-            dc_yn_reg <= (dc_yn >>> DC_BLOCK_SHIFT) + dc_yn_reg;
+        if(SIGNED_OUTPUT == 1) begin
+            // choose lower values of alpha (lower shift)
+            // this will avoid attenuation of lower freqs
+            dc_yn <= cic_out - dc_yn_reg;
+            dc_vld <= cic_vld;
+            if(cic_vld) begin
+                dc_yn_reg <= (dc_yn >>> DC_BLOCK_SHIFT) + dc_yn_reg;
+            end
+            adc_output <= dc_yn;
+            adc_valid <= dc_vld;
+            if(rst) begin
+                dc_vld <= 0;
+                dc_yn <= 0;
+                dc_yn_reg <= 0;
+            end
         end
-        if(rst) begin
-            dc_vld <= 0;
-            dc_yn <= 0;
-            dc_yn_reg <= 0;
+        else begin
+            adc_output <= cic_out;
+            adc_valid <= cic_vld;
         end
-        dc_xn <= cic_out;
     end
-
-    //Assign Output
-    always_ff @(posedge clk) begin
-        adc_u_output <= dc_xn;
-        adc_s_output <= dc_yn;
-        adc_valid  <= dc_vld;
-    end
-
 
 endmodule: sigma_delta_adc

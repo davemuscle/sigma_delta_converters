@@ -12,6 +12,9 @@ module sigma_delta_adc_tb;
     // width = 1 bit pdm + ceil(stages * log2(bosr)) = 1 + ceil(2*10) = 21,
     // which kind of lines up with what I had to do here
     localparam ADC_BITLEN = 2 + $ceil(CIC_STAGES * $clog2(OVERSAMPLE_RATE));
+    localparam SIGNED_OUTPUT = 1;
+    localparam DC_BLOCK_SHIFT = 7;
+
     localparam VCC = 2.5;
     localparam CAP_FUDGE = 128;
     localparam BCLK = SCLK*OVERSAMPLE_RATE;
@@ -58,8 +61,7 @@ module sigma_delta_adc_tb;
         $fclose(fdi);
     end
 
-    real adc_u_output;
-    real adc_s_output;
+    real adc_output;
     bit adc_valid;
 
     // instantiate adc
@@ -68,13 +70,14 @@ module sigma_delta_adc_tb;
         .CAP_FUDGE(CAP_FUDGE),
         .OVERSAMPLE_RATE(OVERSAMPLE_RATE),
         .CIC_STAGES(CIC_STAGES),
-        .ADC_BITLEN(ADC_BITLEN)
+        .ADC_BITLEN(ADC_BITLEN),
+        .SIGNED_OUTPUT(SIGNED_OUTPUT),
+        .DC_BLOCK_SHIFT(DC_BLOCK_SHIFT)
     ) dut (
         .clk(clk),
         .rst(1'b0),
         .adc_input(analog_in),
-        .adc_u_output(adc_u_output),
-        .adc_s_output(adc_s_output),
+        .adc_output(adc_output),
         .adc_valid(adc_valid)
     );
 
@@ -83,14 +86,11 @@ module sigma_delta_adc_tb;
         int t, fdou, fdos;
         $dumpfile("dump.vcd");
         $dumpvars;
-        fdou = $fopen("./tb_dumps/modelsim_adc_tb_unsigned_output.txt", "w");
-        fdos = $fopen("./tb_dumps/modelsim_adc_tb_signed_output.txt", "w");
+        fdou = $fopen("./tb_dumps/modelsim_adc_tb_output.txt", "w");
         $fdisplay(fdou, "index,decimal out");
-        $fdisplay(fdos, "index,decimal out");
         for(t = 0; t < NUM_OUTPUT_SAMPLES; t = t + 1) begin
             @(posedge adc_valid) begin
-                $fdisplay(fdou, "%0.f,%f", t, adc_u_output);
-                $fdisplay(fdos, "%0.f,%f", t, adc_s_output);
+                $fdisplay(fdou, "%0.f,%f", t, adc_output);
             end
         end
         $fclose(fdou);

@@ -11,6 +11,7 @@ G_OVERSAMPLE_RATE=256
 G_CIC_STAGES=2
 G_ADC_BITLEN=24
 G_DC_BLOCK_SHIFT=7
+G_SIGNED_OUTPUT=1
 
 D_SCLK=48000
 D_START_FREQ=220
@@ -18,7 +19,6 @@ D_END_FREQ=20000
 D_NUM_FREQ=40
 D_NUM_PER=32
 D_LOG=1
-D_SIGNED=1
 
 .PHONY: freq
 freq: clean_plot
@@ -33,12 +33,12 @@ freq: clean_plot
 	  export NUM_FREQ=$(D_NUM_FREQ); \
 	  export NUM_PER=$(D_NUM_PER); \
 	  export LOG=$(D_LOG); \
-	  export SIGNED=$(D_SIGNED); \
 	verilator --trace -Wall --cc --exe sigma_delta_adc_tb.cpp ../rtl/sigma_delta_adc.sv sigma_delta_adc_harness.sv --build \
 	  -GVCC=$(G_VCC) \
 	  -GOVERSAMPLE_RATE=$(G_OVERSAMPLE_RATE) \
 	  -GCIC_STAGES=$(G_CIC_STAGES) \
 	  -GADC_BITLEN=$(G_ADC_BITLEN) \
+	  -GSIGNED_OUTPUT=$(G_SIGNED_OUTPUT) \
 	  -GDC_BLOCK_SHIFT=$(G_DC_BLOCK_SHIFT); \
 	./obj_dir/Vsigma_delta_adc;
 
