@@ -22,7 +22,6 @@ D_LOG=1
 freq: clean_plot
 	echo "Verilator Target"
 	rm -f ./obj_dir/Vsigma_delta_adc
-	# BOSR and SCLK are needed to calculate BCLK
 	export VCC=$(G_VCC); export BOSR=$(G_BOSR); export STGS=$(G_STGS); \
 	export SCLK=$(D_SCLK); export START_FREQ=$(D_START_FREQ); export END_FREQ=$(D_END_FREQ); \
 	export NUM_FREQ=$(D_NUM_FREQ); export NUM_PER=$(D_NUM_PER); export LOG=$(D_LOG); \

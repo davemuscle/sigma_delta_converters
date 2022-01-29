@@ -93,10 +93,10 @@ public:
 };
 
 //open file pointer and write into it, data is saved as a float
-void save_stimulus(const char *fp, float val){
+void save_stimulus(const char *fp, float x, float y){
     std::ofstream file;
     file.open(fp, std::ios_base::app);
-    file << val << "\n";
+    file << x << "," << y << "\n";
     file.close();
 }
 
@@ -179,6 +179,32 @@ void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int nu
     amp_data out_amp;
     amp_data in_amp;
 
+    //open files and write units
+    std::ofstream file;
+    const char * input_file  = "./tb_dumps/verilator_adc_tb_0_input.txt";
+    const char * output_file = "./tb_dumps/verilator_adc_tb_1_output.txt";
+    const char * gain_file   = "./tb_dumps/verilator_adc_tb_2_gain.txt";
+    const char * phase_file  = "./tb_dumps/verilator_adc_tb_3_phase.txt";
+
+    int input_idx = 0;
+    int output_idx = 0;
+
+    file.open(input_file, std::ios_base::app);
+    file << "index,voltage(V)\n";
+    file.close();
+
+    file.open(output_file, std::ios_base::app);
+    file << "index,voltage(V)\n";
+    file.close();
+
+    file.open(gain_file, std::ios_base::app);
+    file << "frequency (Hz), Gain(dB)\n";
+    file.close();
+
+    file.open(phase_file, std::ios_base::app);
+    file << "frequency (Hz), Phase(deg)\n";
+    file.close();
+
     //loop through frequencies to plot
     for(int i = 0; i < num_steps; i++){
         //calculate how many bclk samples are needed for 1 period
@@ -205,8 +231,8 @@ void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int nu
                         record_amplitude(hns->dut->adc_input, &in_amp);
                         record_amplitude(adc_result, &out_amp);
                         //write the current value to files for visual comparison
-                        save_stimulus("./tb_dumps/verilator_adc_tb_input.txt", hns->dut->adc_input);
-                        save_stimulus("./tb_dumps/verilator_adc_tb_output.txt",adc_result);
+                        save_stimulus(input_file, input_idx++, hns->dut->adc_input);
+                        save_stimulus(output_file, output_idx++, adc_result);
                     }
                     hns->trace();
                 }
@@ -216,16 +242,22 @@ void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int nu
         }
         //continually subtract perlen down from the phase offset to remove 2pi wraparound
         //the phase last-low-idx can be in any period
-        int sclk_per_len = per_len / hns->bosr;
+        float sclk_per_len = per_len / hns->bosr;
         while(out_amp.lli > 0 && out_amp.lli > sclk_per_len){
             out_amp.lli -= sclk_per_len;
         }
         while(in_amp.lli > 0 && in_amp.lli > sclk_per_len){
             in_amp.lli -= sclk_per_len;
         }
+        //convert gain to db = 20 log10(gain)
+        float gain = out_amp.res / in_amp.res;
+        gain = 20.0f*log10(gain);
+        //convert phase to degress, deg = diff * 360 / sclk_per_len
+        float phase = out_amp.lli - in_amp.lli;
+        phase = phase * 360.0f / sclk_per_len; 
         //write amplitude and phase to a file
-        save_stimulus("./tb_dumps/verilator_adc_tb_z_amp.txt", out_amp.res/in_amp.res);
-        save_stimulus("./tb_dumps/verilator_adc_tb_z_pha.txt", out_amp.lli - in_amp.lli);
+        save_stimulus(gain_file, freq[i], gain);
+        save_stimulus(phase_file, freq[i], phase);
     }
     print_load_bar(num_steps, num_steps, 0, num_per);
     printf("\n");
@@ -244,13 +276,13 @@ int main(int argc, char **argv, char **env){
     int END_FREQ   = std::stol(std::getenv("END_FREQ"));
     int NUM_FREQ   = std::stol(std::getenv("NUM_FREQ"));
     int NUM_PER    = std::stol(std::getenv("NUM_PER"));
-    bool LOG       = std::stol(std::getenv("LOG"));
+    bool DLOG      = std::stol(std::getenv("LOG"));
 
     printf("Making sure env variables for main got parsed too:\n");
-    printf("  START_FREQ = %d, END_FREQ = %d, NUM_FREQ = %d, NUM_PER = %d, LOG=%d\n", START_FREQ, END_FREQ, NUM_FREQ, NUM_PER, LOG);
+    printf("  START_FREQ = %d, END_FREQ = %d, NUM_FREQ = %d, NUM_PER = %d, LOG=%d\n", START_FREQ, END_FREQ, NUM_FREQ, NUM_PER, DLOG);
     printf("\n");
 
-    run_freqz(hns, START_FREQ, END_FREQ, NUM_FREQ, NUM_PER, LOG);
+    run_freqz(hns, START_FREQ, END_FREQ, NUM_FREQ, NUM_PER, DLOG);
 
     hns->trace("finish");
 

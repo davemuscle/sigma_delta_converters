@@ -15,7 +15,7 @@ module sigma_delta_adc_tb;
     localparam VCC = 2.5;
     localparam CAP_FUDGE = 128;
     localparam BCLK = SCLK*BOSR;
-    localparam FREQ = 20000;
+    localparam FREQ = 440;
     localparam SCALE = 0.99*VCC;
     localparam NUM_OUTPUT_SAMPLES = 256;
 
@@ -45,11 +45,15 @@ module sigma_delta_adc_tb;
 
     initial begin: file_input
         int fdi;
+        int t;
         fdi = $fopen("./tb_dumps/modelsim_adc_tb_input.txt", "w");
+        $fdisplay(fdi, "index,voltage (V)");
         forever begin
             @(posedge clk);
-            if(sample_num > 0)
-                $fdisplay(fdi, "%f", analog_in);
+            if(sample_num > 0) begin
+                $fdisplay(fdi, "%0.f,%f", t, analog_in);
+                t = t + 1;
+            end
         end
         $fclose(fdi);
     end
@@ -96,9 +100,10 @@ module sigma_delta_adc_tb;
         $dumpfile("dump.vcd");
         $dumpvars;
         fdo = $fopen("./tb_dumps/modelsim_adc_tb_output.txt", "w");
+        $fdisplay(fdo, "index,decimal out");
         for(t = 0; t < NUM_OUTPUT_SAMPLES; t = t + 1) begin
             @(posedge adc_valid) begin
-                $fdisplay(fdo, "%f", adc_output_voltage);
+                $fdisplay(fdo, "%0.f,%f", t, adc_output_voltage);
             end
         end
         $fclose(fdo);
