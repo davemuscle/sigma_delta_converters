@@ -214,6 +214,15 @@ void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int nu
             //update loading bar
             print_load_bar(i, num_steps, per, num_per);
         }
+        //continually subtract perlen down from the phase offset to remove 2pi wraparound
+        //the phase last-low-idx can be in any period
+        int sclk_per_len = per_len / hns->bosr;
+        while(out_amp.lli > 0 && out_amp.lli > sclk_per_len){
+            out_amp.lli -= sclk_per_len;
+        }
+        while(in_amp.lli > 0 && in_amp.lli > sclk_per_len){
+            in_amp.lli -= sclk_per_len;
+        }
         //write amplitude and phase to a file
         save_stimulus("./tb_dumps/verilator_adc_tb_z_amp.txt", out_amp.res/in_amp.res);
         save_stimulus("./tb_dumps/verilator_adc_tb_z_pha.txt", out_amp.lli - in_amp.lli);
@@ -231,7 +240,7 @@ int main(int argc, char **argv, char **env){
 
     hns->trace("start");
 
-    run_freqz(hns, 220, 20000, 40, 32, true);
+    run_freqz(hns, 220, 20000, 10, 32, true);
 
     hns->trace("finish");
 
