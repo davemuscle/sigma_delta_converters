@@ -29,6 +29,7 @@ module top
 
     always_comb begin
         led = ~(adc_output[19:12]);
+        led = 8'hFF; //todo undo lights off
     end
 
     //uart signals
@@ -65,7 +66,7 @@ module top
     bit [23:0] samples [NUM_SAMPLES-1:0];
     bit [31:0] sample_idx = 0;
 
-    localparam WAIT_CNT = 10000;
+    localparam WAIT_CNT = 100;
     bit [31:0] wait_idx = 0;
     bit [2:0] nibble_idx = 0;
     bit sample_read = 0;
@@ -99,6 +100,7 @@ module top
                     pushing <= 1;
                     sample_idx <= 0;
                     nibble_idx <= 0;
+                    wait_idx <= 0;
                 end
             end
         end
