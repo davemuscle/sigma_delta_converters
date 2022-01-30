@@ -62,7 +62,7 @@ module sigma_delta_adc #(
         end
 
         //Time-gate decimators via enable signal
-        dec_cnt <= dec_cnt + 1;
+        dec_cnt <= dec_cnt + CNT_ADC_BITLEN'(1);
         if(dec_cnt == dec_cmp) begin
             dec_ena <= 1;
         end
