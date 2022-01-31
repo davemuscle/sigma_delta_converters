@@ -27,7 +27,7 @@ def read_hw_uart(device, num_samples):
     print("read from uart, time: ", end-start)
     return samples
 
-def dft(samples_in, DFT_SIZE, SAMP_FREQ):
+def dft(samples, DFT_SIZE, SAMP_FREQ):
     XQ = [0]*DFT_SIZE
     XI = [0]*DFT_SIZE
 
@@ -64,23 +64,22 @@ def get_amplitude(samples):
             high = samples[x];
     return high-low
 
-def oneshot_run(freq, amp, uart_device, num_samples):
+def oneshot_run(freq, amp, uart_device, num_samples, filter=0):
     dad = DigilentAnalogDiscovery()
-    dad.get_version()
     dad.open_device()
     dad.wavegen_config_sine_out(freq=freq, amp=amp)
     samples = read_hw_uart(uart_device, num_samples)
     dad.close_device()
-    return samples
 
-def oneshot_plot(samples, num_samples, samp_freq, bosr, vcc, filter):
     for x in range(num_samples):
         samples[x] = samples[x] * vcc / (bosr*bosr) 
-        
     amp = get_amplitude(samples)
+
     mid = sum(samples) / len(samples)
+    
     print("Amplitude measured: " + str(amp))
     print("DC measured: " + str(mid))
+    
     Xf, XM = dft(samples, num_samples, samp_freq)
 
     fig,axs = subplots(2,1)
@@ -101,6 +100,9 @@ def oneshot_plot(samples, num_samples, samp_freq, bosr, vcc, filter):
     tight_layout()
     show()
 
+#def bode_plot(samples, num_samples, samp_freq, bosr, vcc, filter):
+        
+
 func_freq = 440
 func_amp = 0.5
 num_samples = 1024
@@ -109,8 +111,39 @@ bosr = 1024
 samp_freq = 50000000 / bosr
 vcc = 2.5
 
+start_freq = 220
+num_steps = 5
+log_step = 2.0**(1.0/12.0)
+
 if(len(sys.argv) == 2 and sys.argv[1] == 'o'):
-    samples = oneshot_run(func_freq, func_amp, device, num_samples)
-    oneshot_plot(samples, num_samples, samp_freq, bosr, vcc, 0)
+    oneshot_run(func_freq, func_amp, device, num_samples)
     exit()
+
+if(len(sys.argv) == 2 and sys.argv[1] == 'f'):
+    start_freq = 220
+    freq = start_freq
+    amp = 0.5
+    log_step = 2.0**(1.0/12.0)
+    num_steps = 30
+    amps = [0]*num_steps
+    freqs = [0]*num_steps
+    dad = DigilentAnalogDiscovery()
+    dad.open_device()
+    for x in range(num_steps):
+        print("Loop iteration: " + str(x) + " freq = ", str(freq))
+        dad.wavegen_config_sine_out(freq=freq, amp=amp)
+        samples = read_hw_uart(device, num_samples)
+        for j in range(num_samples):
+            samples[j] = samples[j] * vcc / (bosr*bosr) 
+        amps[x] = get_amplitude(samples) / amp
+        freqs[x] = freq
+        freq = freq * log_step
+    dad.close_device()
+    figure()
+    plot(freqs, amps)
+    title("Bode Plot")
+    tight_layout()
+    show()
+
+
 
