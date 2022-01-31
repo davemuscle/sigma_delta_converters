@@ -66,7 +66,7 @@ module top
     bit [23:0] samples [NUM_SAMPLES-1:0];
     bit [31:0] sample_idx = 0;
 
-    localparam WAIT_CNT = 100;
+    localparam WAIT_CNT = 5000;
     bit [31:0] wait_idx = 0;
     bit [2:0] nibble_idx = 0;
     bit sample_read = 0;

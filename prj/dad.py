@@ -45,23 +45,22 @@ class DigilentAnalogDiscovery:
         if(self.loud):
             print("Closed device")
 
-x = DigilentAnalogDiscovery()
-x.enable_prints()
-x.get_version()
-x.open_device()
+    def wavegen_config_sine_out(self, channel=0, freq=100, amp=1.0, offset=0):
+        self.dwf.FDwfDeviceAutoConfigureSet   (self.hdwf, channel)
+        self.dwf.FDwfAnalogOutNodeEnableSet   (self.hdwf, channel, AnalogOutNodeCarrier, c_bool(True))
+        self.dwf.FDwfAnalogOutNodeFunctionSet (self.hdwf, channel, AnalogOutNodeCarrier, funcSine)
+        self.dwf.FDwfAnalogOutNodeFrequencySet(self.hdwf, channel, AnalogOutNodeCarrier, c_double(freq))
+        self.dwf.FDwfAnalogOutNodeAmplitudeSet(self.hdwf, channel, AnalogOutNodeCarrier, c_double(amp))
+        self.dwf.FDwfAnalogOutNodeOffsetSet   (self.hdwf, channel, AnalogOutNodeCarrier, c_double(offset))
+        self.dwf.FDwfAnalogOutConfigure       (self.hdwf, channel, c_bool(True))
 
-channel = c_int(0)
 
-x.dwf.FDwfDeviceAutoConfigureSet(x.hdwf, c_int(0))
-
-x.dwf.FDwfAnalogOutNodeEnableSet   (x.hdwf, channel, AnalogOutNodeCarrier, c_bool(True))
-x.dwf.FDwfAnalogOutNodeFunctionSet(x.hdwf, channel, AnalogOutNodeCarrier, funcSine)
-x.dwf.FDwfAnalogOutNodeFrequencySet(x.hdwf, channel, AnalogOutNodeCarrier, c_double(440))
-x.dwf.FDwfAnalogOutNodeAmplitudeSet(x.hdwf, channel, AnalogOutNodeCarrier, c_double(0.400))
-x.dwf.FDwfAnalogOutNodeOffsetSet   (x.hdwf, channel, AnalogOutNodeCarrier, c_double(1.60))
-
-x.dwf.FDwfAnalogOutConfigure(x.hdwf, channel, c_bool(True))
-input("press enter")
-x.close_device()
+#x = DigilentAnalogDiscovery()
+#x.enable_prints()
+#x.get_version()
+#x.open_device()
+#x.wavegen_config_sine_out(freq=440, amp=0.5)
+#input("press enter")
+#x.close_device()
 
 

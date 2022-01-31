@@ -4,29 +4,28 @@ import os
 import serial
 import sys
 import math
+import time
 from matplotlib.pyplot import *
 from scipy.signal import *
 
-ser = serial.Serial('/dev/ttyS2', 115200)
-print(ser.name)
+from dad import *
 
-num_samples = 1024
-ser.write(b's')
-samples = [0]*num_samples
-for x in range(num_samples):
-    line = ser.readline()
-    line = line.decode('utf-8')
-    line = line.strip()
-    #print(line)
-    samples[x] = int(line,16)
-
-ser.close()
-
-
-#for n in range(DFT_SIZE):
-#    samples[n] = math.cos(2*3.14*n*440/SAMP_FREQ)*1000
-DFT_SIZE = num_samples
-SAMP_FREQ = 50000000 / 1024
+def read_hw_uart(device, num_samples):
+    ser = serial.Serial(device, 115200)
+    print(ser.name)
+    start = time.time()
+    ser.write(b's')
+    samples = [0]*num_samples
+    for x in range(num_samples):
+        line = ser.readline()
+        line = line.decode('utf-8')
+        line = line.strip()
+        #print(line)
+        samples[x] = int(line,16)
+    end = time.time()
+    ser.close()
+    print("read from uart, time: ", end-start)
+    return samples
 
 def dft(samples_in, DFT_SIZE, SAMP_FREQ):
     XQ = [0]*DFT_SIZE
@@ -46,31 +45,72 @@ def dft(samples_in, DFT_SIZE, SAMP_FREQ):
 
     return Xf, XM
 
-nyq_rate = SAMP_FREQ / 2
-width = 3200/nyq_rate
-ripple_db = 60
-N, beta = kaiserord(ripple_db, width)
-cutoff_hz = 20000
-taps = firwin(N, cutoff_hz/nyq_rate, window=('kaiser', beta))
+def filter(samples, samp_freq):
+    nyq_rate = samp_freq / 2
+    width = 3200/nyq_rate
+    ripple_db = 60
+    N, beta = kaiserord(ripple_db, width)
+    cutoff_hz = 20000
+    taps = firwin(N, cutoff_hz/nyq_rate, window=('kaiser', beta))
+    return lfilter(taps, 1.0, samples)
 
-fig,axs = subplots(2,2)
-axs[0,0].plot(samples)
-axs[0,0].set_title("Hardware Data")
+def get_amplitude(samples):
+    low = samples[0]
+    high = samples[0]
+    for x in range(1, len(samples)):
+        if(samples[x] < low):
+            low = samples[x];
+        if(samples[x] > high):
+            high = samples[x];
+    return high-low
 
-Xf, XM = dft(samples, DFT_SIZE, SAMP_FREQ)
+def oneshot_run(freq, amp, uart_device, num_samples):
+    dad = DigilentAnalogDiscovery()
+    dad.get_version()
+    dad.open_device()
+    dad.wavegen_config_sine_out(freq=freq, amp=amp)
+    samples = read_hw_uart(uart_device, num_samples)
+    dad.close_device()
+    return samples
 
-axs[0,1].plot(Xf, XM)
-axs[0,1].set_title("FFT")
+def oneshot_plot(samples, num_samples, samp_freq, bosr, vcc, filter):
+    for x in range(num_samples):
+        samples[x] = samples[x] * vcc / (bosr*bosr) 
+        
+    amp = get_amplitude(samples)
+    mid = sum(samples) / len(samples)
+    print("Amplitude measured: " + str(amp))
+    print("DC measured: " + str(mid))
+    Xf, XM = dft(samples, num_samples, samp_freq)
 
-filtered = lfilter(taps, 1.0, samples)
+    fig,axs = subplots(2,1)
+    axs[0].plot(samples)
+    axs[0].set_title("Hardware Data")
+    axs[1].plot(Xf, XM)
+    axs[1].set_title("FFT")
 
-axs[1,0].plot(filtered)
-axs[1,0].set_title("Hardware Data Filtered")
+    if(filter):
+        samples_filtered = filter(samples, samp_freq)
+        Xf_f, XM_f = dft(samples_filtered, num_samples, samp_freq)
+        fig,axs = subplots(2,1)
+        axs[0].plot(samples_filtered)
+        axs[0].set_title("Hardware Data Filtered")
+        axs[1].plot(Xf_f, XM_f)
+        axs[1].set_title("FFT")
 
-Xf, XM = dft(filtered, DFT_SIZE, SAMP_FREQ)
+    tight_layout()
+    show()
 
-axs[1,1].plot(Xf, XM)
-axs[1,1].set_title("FFT")
+func_freq = 440
+func_amp = 0.5
+num_samples = 1024
+device = '/dev/ttyS2'
+bosr = 1024
+samp_freq = 50000000 / bosr
+vcc = 2.5
 
-tight_layout()
-show()
+if(len(sys.argv) == 2 and sys.argv[1] == 'o'):
+    samples = oneshot_run(func_freq, func_amp, device, num_samples)
+    oneshot_plot(samples, num_samples, samp_freq, bosr, vcc, 0)
+    exit()
+
