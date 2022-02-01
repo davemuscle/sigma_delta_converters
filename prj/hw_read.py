@@ -10,7 +10,7 @@ from scipy.signal import *
 
 from dad import *
 
-def read_hw_uart(device, num_samples):
+def read_hw_uart(device, num_samples, signed):
     ser = serial.Serial(device, 115200)
     print(ser.name)
     start = time.time()
@@ -22,6 +22,9 @@ def read_hw_uart(device, num_samples):
         line = line.strip()
         #print(line)
         samples[x] = int(line,16)
+        if(signed == 1 and (samples[x] & (1 << 23))): #todo change bit
+            samples[x] -= (1 << 24)
+        print(line + " = " + str(samples[x]))
     end = time.time()
     ser.close()
     print("read from uart, time: ", end-start)
@@ -62,23 +65,32 @@ def get_amplitude(samples):
             low = samples[x];
         if(samples[x] > high):
             high = samples[x];
-    return high-low
+    return ((high-low)/2)
 
-def oneshot_run(freq, amp, uart_device, num_samples, filter=0):
+def oneshot_run(freq, amp, uart_device, num_samples, signed=0, filter=0):
     dad = DigilentAnalogDiscovery()
     dad.open_device()
     dad.wavegen_config_sine_out(freq=freq, amp=amp)
-    samples = read_hw_uart(uart_device, num_samples)
+    samples = read_hw_uart(uart_device, num_samples, signed)
     dad.close_device()
 
     for x in range(num_samples):
         samples[x] = samples[x] * vcc / (bosr*bosr) 
     amp = get_amplitude(samples)
-
     mid = sum(samples) / len(samples)
+    
+    stdev = 0
+    for x in range(num_samples):
+        stdev = stdev + ((samples[x] - mid)**2.0)
+    stdev /= num_samples
+    stdev = stdev ** 0.5;
+
+
     
     print("Amplitude measured: " + str(amp))
     print("DC measured: " + str(mid))
+    print("Stdev measured: " + str(stdev))
+    print("SNR: " + str((mid**2)/(stdev**2)))
     
     Xf, XM = dft(samples, num_samples, samp_freq)
 
@@ -110,21 +122,22 @@ device = '/dev/ttyS2'
 bosr = 1024
 samp_freq = 50000000 / bosr
 vcc = 2.5
+signed = 0
 
 start_freq = 220
 num_steps = 5
 log_step = 2.0**(1.0/12.0)
 
 if(len(sys.argv) == 2 and sys.argv[1] == 'o'):
-    oneshot_run(func_freq, func_amp, device, num_samples)
+    oneshot_run(func_freq, func_amp, device, num_samples, signed, 0)
     exit()
 
 if(len(sys.argv) == 2 and sys.argv[1] == 'f'):
-    start_freq = 220
+    start_freq = 110
     freq = start_freq
     amp = 0.5
     log_step = 2.0**(1.0/12.0)
-    num_steps = 30
+    num_steps = 90
     amps = [0]*num_steps
     freqs = [0]*num_steps
     dad = DigilentAnalogDiscovery()
@@ -141,6 +154,7 @@ if(len(sys.argv) == 2 and sys.argv[1] == 'f'):
     dad.close_device()
     figure()
     plot(freqs, amps)
+    ylim([0, 1.5])
     title("Bode Plot")
     tight_layout()
     show()

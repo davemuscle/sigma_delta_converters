@@ -100,21 +100,22 @@ module sigma_delta_adc #(
     end
 
     //DC Removal / Assign Output
-    bit signed [ADC_BITLEN-1:0] dc_yn; 
-    bit signed [ADC_BITLEN-1:0] dc_yn_reg;
+    bit signed [ADC_BITLEN-1:0] dc_yn = 0; 
+    bit signed [ADC_BITLEN-1:0] dc_yn_reg = 0;
     bit dc_vld;
 
     always_ff @(posedge clk) begin
         if(SIGNED_OUTPUT == 1) begin
             // choose lower values of alpha (lower shift)
             // this will avoid attenuation of lower freqs
-            dc_yn <= cic_out - dc_yn_reg;
-            dc_vld <= cic_vld;
+            adc_valid <= 0;
             if(cic_vld) begin
+                dc_yn <= cic_out - dc_yn_reg;
+                dc_vld <= cic_vld;
                 dc_yn_reg <= (dc_yn >>> DC_BLOCK_SHIFT) + dc_yn_reg;
+                adc_output <= dc_yn;
+                adc_valid <= 1;
             end
-            adc_output <= dc_yn;
-            adc_valid <= dc_vld;
             if(rst) begin
                 dc_vld <= 0;
                 dc_yn <= 0;

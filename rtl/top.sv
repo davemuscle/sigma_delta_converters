@@ -2,6 +2,7 @@ module top
 (
     input bit clk,
     input bit pin,
+    output bit vref,
     output bit fb,
     output bit [7:0] led,
     output bit tx,
@@ -17,7 +18,7 @@ module top
         .CIC_STAGES(2),
         .ADC_BITLEN(24),
         .SIGNED_OUTPUT(0),
-        .DC_BLOCK_SHIFT(0)
+        .DC_BLOCK_SHIFT(7)
     ) dut (
         .clk(clk),
         .rst(1'b0),
@@ -30,6 +31,7 @@ module top
     always_comb begin
         led = ~(adc_output[19:12]);
         led = 8'hFF; //todo undo lights off
+        vref = 1;
     end
 
     //uart signals
