@@ -130,7 +130,7 @@ void record_amplitude(float sample, struct amp_data *amp_stru){
         amp_stru->high = sample;
     }
     //record result
-    amp_stru->res = amp_stru->high - amp_stru->low;
+    amp_stru->res = (amp_stru->high - amp_stru->low)/2;
     //idx for phase calculation
     amp_stru->idx++;
 }
@@ -169,11 +169,11 @@ void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int nu
     //}
 
     // put dc on to let the integrators build up the output before starting
-    hns->glb_cycles = 0;
-    hns->generate_input(1);
-    for(uint16_t i = 0; i < 32768; i++){
-        hns->clock();
-    }
+    //hns->glb_cycles = 0;
+    //hns->generate_input(1);
+    //for(uint16_t i = 0; i < 32768; i++){
+    //    hns->clock();
+    //}
     hns->glb_cycles = 0;
 
     amp_data out_amp;
@@ -236,8 +236,8 @@ void run_freqz(Harness *hns, int start_freq, int end_freq, int num_steps, int nu
                         save_stimulus(input_file, input_idx++, hns->dut->adc_input);
                         save_stimulus(output_file, output_idx++, adc_result);
                     }
-                    hns->trace();
                 }
+                hns->trace();
             }
             //update loading bar
             print_load_bar(i, num_steps, per, num_per);

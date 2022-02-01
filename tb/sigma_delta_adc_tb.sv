@@ -12,7 +12,7 @@ module sigma_delta_adc_tb;
     // width = 1 bit pdm + ceil(stages * log2(bosr)) = 1 + ceil(2*10) = 21,
     // which kind of lines up with what I had to do here
     localparam ADC_BITLEN = 2 + $ceil(CIC_STAGES * $clog2(OVERSAMPLE_RATE));
-    localparam SIGNED_OUTPUT = 1;
+    localparam SIGNED_OUTPUT = 0;
     localparam DC_BLOCK_SHIFT = 7;
 
     localparam VCC = 2.5;
@@ -20,7 +20,7 @@ module sigma_delta_adc_tb;
     localparam BCLK = SCLK*OVERSAMPLE_RATE;
     localparam FREQ = 440;
     localparam SCALE = 0.99*VCC;
-    localparam NUM_OUTPUT_SAMPLES = 1024;
+    localparam NUM_OUTPUT_SAMPLES = 256;
 
     initial begin
         $display("Calculated %-d for ADC calculation width", ADC_BITLEN);
@@ -35,6 +35,9 @@ module sigma_delta_adc_tb;
             #(CLK_NS) clk <= 1;
         end
     end
+    
+    real adc_output;
+    bit adc_valid;
 
     // analog input generator
     int sample_num = 0;
@@ -53,7 +56,7 @@ module sigma_delta_adc_tb;
         $fdisplay(fdi, "index,voltage (V)");
         forever begin
             @(posedge clk);
-            if(sample_num > 0) begin
+            if(adc_valid) begin
                 $fdisplay(fdi, "%0.f,%f", t, analog_in);
                 t = t + 1;
             end
@@ -61,8 +64,6 @@ module sigma_delta_adc_tb;
         $fclose(fdi);
     end
 
-    real adc_output;
-    bit adc_valid;
 
     // instantiate adc
     sigma_delta_adc_harness #(
@@ -83,14 +84,19 @@ module sigma_delta_adc_tb;
 
     // stim
     initial begin: stim
-        int t, fdou, fdos;
+        int i, t, fdou, fdos;
+        real adc_output_voltage;
         $dumpfile("dump.vcd");
         $dumpvars;
         fdou = $fopen("./tb_dumps/modelsim_adc_tb_output.txt", "w");
         $fdisplay(fdou, "index,decimal out");
         for(t = 0; t < NUM_OUTPUT_SAMPLES; t = t + 1) begin
+            adc_output_voltage = real'(adc_output);
+            for(i = 0; i < CIC_STAGES; i = i + 1) begin
+                adc_output_voltage = adc_output_voltage / real'(OVERSAMPLE_RATE);
+            end
             @(posedge adc_valid) begin
-                $fdisplay(fdou, "%0.f,%f", t, adc_output);
+                $fdisplay(fdou, "%0.f,%f", t, adc_output_voltage);
             end
         end
         $fclose(fdou);

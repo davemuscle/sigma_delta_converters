@@ -116,7 +116,7 @@ def oneshot_run(freq, amp, uart_device, num_samples, signed=0, filter=0):
         
 
 func_freq = 440
-func_amp = 0.5
+func_amp = 1
 num_samples = 1024
 device = '/dev/ttyS2'
 bosr = 1024
