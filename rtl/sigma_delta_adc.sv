@@ -102,17 +102,19 @@ module sigma_delta_adc #(
     //DC Removal / Assign Output
     bit signed [ADC_BITLEN-1:0] dc_yn = 0; 
     bit signed [ADC_BITLEN-1:0] dc_yn_reg = 0;
+    bit adc_pre_valid = 0;
+    bit [ADC_BITLEN-1:0] adc_pre_output = 0;
 
     always_ff @(posedge clk) begin
         if(SIGNED_OUTPUT == 1) begin
             // choose lower values of alpha (lower shift)
             // this will avoid attenuation of lower freqs
-            adc_valid <= 0;
+            adc_pre_valid <= 0;
             if(cic_vld) begin
                 dc_yn <= cic_out - dc_yn_reg;
                 dc_yn_reg <= (dc_yn >>> DC_BLOCK_SHIFT) + dc_yn_reg;
-                adc_output <= dc_yn;
-                adc_valid <= 1;
+                adc_pre_output <= dc_yn;
+                adc_pre_valid <= 1;
             end
             if(rst) begin
                 dc_yn <= 0;
@@ -120,8 +122,39 @@ module sigma_delta_adc #(
             end
         end
         else begin
-            adc_output <= cic_out;
-            adc_valid <= cic_vld;
+            adc_pre_output <= cic_out;
+            adc_pre_valid  <= cic_vld;
+        end
+    end
+
+    //Compensation FIR
+    bit signed [ADC_BITLEN-1:0] in_signed = 0;
+    bit unsigned [ADC_BITLEN-1:0] in_unsigned = 0;
+    bit [ADC_BITLEN-1:0] shifted_8, shifted_2 = 0;
+    bit [ADC_BITLEN-1:0] d1 = 0;
+    bit [ADC_BITLEN-1:0] d2 = 0;
+    bit [ADC_BITLEN-1:0] sum = 0;
+    always_comb begin
+        in_signed = signed'(d1);
+        in_unsigned = unsigned'(d1);
+        //only works for 2 stages
+        if(SIGNED_OUTPUT == 1) begin
+            shifted_8 = in_signed <<< 1;
+            shifted_2 = in_signed <<< 1;
+        end
+        else begin
+            shifted_8 = in_unsigned <<< 1;
+            shifted_2 = in_unsigned <<< 1;
+        end
+    end
+    always_ff @(posedge clk) begin
+        adc_valid <= 0;
+        if(adc_pre_valid) begin
+            d1 <= adc_pre_output;
+            d2 <= d1;
+            sum <= d2 + adc_pre_output - shifted_8 - shifted_2;
+            adc_valid <= 1;
+            adc_output <= sum;
         end
     end
 

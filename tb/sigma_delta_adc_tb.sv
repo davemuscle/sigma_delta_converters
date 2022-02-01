@@ -11,8 +11,9 @@ module sigma_delta_adc_tb;
     //from Tom's site:
     // width = 1 bit pdm + ceil(stages * log2(bosr)) = 1 + ceil(2*10) = 21,
     // which kind of lines up with what I had to do here
-    localparam ADC_BITLEN = 2 + $ceil(CIC_STAGES * $clog2(OVERSAMPLE_RATE));
-    localparam SIGNED_OUTPUT = 0;
+    localparam ADC_BITLEN = 24;
+    //localparam ADC_BITLEN = 2 + $ceil(CIC_STAGES * $clog2(OVERSAMPLE_RATE));
+    localparam SIGNED_OUTPUT = 1;
     localparam DC_BLOCK_SHIFT = 7;
 
     localparam VCC = 2.5;
@@ -20,7 +21,7 @@ module sigma_delta_adc_tb;
     localparam BCLK = SCLK*OVERSAMPLE_RATE;
     localparam FREQ = 440;
     localparam SCALE = 0.99*VCC;
-    localparam NUM_OUTPUT_SAMPLES = 256;
+    localparam NUM_OUTPUT_SAMPLES = 1024;
 
     initial begin
         $display("Calculated %-d for ADC calculation width", ADC_BITLEN);

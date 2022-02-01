@@ -115,14 +115,14 @@ def oneshot_run(freq, amp, uart_device, num_samples, signed=0, filter=0):
 #def bode_plot(samples, num_samples, samp_freq, bosr, vcc, filter):
         
 
-func_freq = 440
+func_freq = 880
 func_amp = 1
 num_samples = 1024
 device = '/dev/ttyS2'
 bosr = 1024
 samp_freq = 50000000 / bosr
 vcc = 2.5
-signed = 0
+signed = 1
 
 start_freq = 220
 num_steps = 5
