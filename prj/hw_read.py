@@ -136,6 +136,13 @@ class HwTest:
     def get_dc(self, samples):
         return (sum(samples)/len(samples))
 
+    # Get RMS of the set
+    def get_rms(self, samples):
+        sq_sum = 0
+        for x in samples:
+            sq_sum += (x**2)
+        return math.sqrt(sq_sum)
+
     # Calculate DFT, skips DC bin
     def get_dft(self, samples):
         XQ = [0]*self.WVFM_dft_size
@@ -199,28 +206,28 @@ def oneshot_run(freq, amp, uart_device, num_samples, signed=0, filter=0):
 
 #def bode_plot(samples, num_samples, samp_freq, bosr, vcc, filter):
 def oneshot(hw):
-    # adjust fundamental to exact bin
-    hw.WVFM_dft_size = 1024
-    delta = (hw.FPGA_bclk / hw.FPGA_bosr) / hw.WVFM_dft_size
-    nearest_bin = hw.WVFM_freq / delta
-    new_freq = round(nearest_bin)*delta
-    print(f"{new_freq=}")
-    hw.WVFM_freq = new_freq
     # config device
     hw.open_dad()
     #hw.setup_dad_waveform()
     
     samp_clk = hw.FPGA_bclk / hw.FPGA_bosr
-    custom_len = round(samp_clk / new_freq)
+    custom_len = round(samp_clk / hw.WVFM_freq)
     hw.dad.setup_custom_data(custom_len)
-    for i in range(custom_len):
-        hw.dad.custom_data[i] = math.cos(2*3.14*new_freq*i/samp_clk)
-
-    # fuzz with noise
-    noise_amp = 0.1
+    # create noise signal
+    noise_amp = 0.05
     for i in range(custom_len):
         noise = noise_amp*random.randrange(-100,100,1)/100
         hw.dad.custom_data[i] += noise
+    
+    # get rms of the noise only
+    hw.dad.wavegen_config_custom_out(0, hw.WVFM_freq, hw.WVFM_amp, 0)
+    samples = hw.decode_serial(hw.read_serial())
+    voltages = hw.get_voltages(samples)
+    noise_rms = hw.get_rms(voltages)
+
+    # add in the signal (sine wave)
+    for i in range(custom_len):
+        hw.dad.custom_data[i] += math.cos(2*3.14*hw.WVFM_freq*i/samp_clk)
 
     hw.dad.wavegen_config_custom_out(0, hw.WVFM_freq, hw.WVFM_amp, 0)
     #hw.dad.wavegen_config_sine_out(freq=hw.WVFM_freq, amp=hw.WVFM_amp)
@@ -231,6 +238,7 @@ def oneshot(hw):
     voltages = hw.get_voltages(samples)
     amplitude = hw.get_amplitude(voltages)
     dc = hw.get_dc(voltages)
+    rms = hw.get_rms(voltages)
     # get dft
     dft_freqs, dft_mags = hw.get_dft(voltages)
     # show params
@@ -238,11 +246,9 @@ def oneshot(hw):
     # print
     print("Amplitude: " + str(amplitude))
     print("DC: " + str(dc))
-    x,y = hw.get_sfdr(dft_mags)
-    snr = x/y
-    print("Highest FFT: " + str(x))
-    print("Second Highest FFT: " + str(y))
-    print("SNR: " + str(snr))
+    print("RMS: " + str(rms))
+    print("RMS Noise: "+ str(noise_rms))
+    print("SNR: " + str((rms**2)/(noise_rms**2)))
     # plot
     subplot(211)
     plot(voltages)
