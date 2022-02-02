@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
 # Dave Muscle
-# 
-# Helper for running Digilent's Analog Discovery via Python
-# Adapted mostly from their sample code
+
+"""
+  Helper for running Digilent's Analog Discovery via Python
+  Adapted mostly from their sample code
+"""
 
 import sys
 sys.path.append("/usr/share/digilent/waveforms/samples/py")
@@ -54,6 +56,20 @@ class DigilentAnalogDiscovery:
         self.dwf.FDwfAnalogOutNodeOffsetSet   (self.hdwf, channel, AnalogOutNodeCarrier, c_double(offset))
         self.dwf.FDwfAnalogOutConfigure       (self.hdwf, channel, c_bool(True))
 
+    def setup_custom_data(self, size):
+        self.custom_data = (c_double*size)()
+        self.custom_len = c_int(size)
+
+    def wavegen_config_custom_out(self, channel=0, freq=100, amp=1.0, offset=0):
+        self.dwf.FDwfDeviceAutoConfigureSet   (self.hdwf, channel)
+        self.dwf.FDwfAnalogOutNodeEnableSet   (self.hdwf, channel, AnalogOutNodeCarrier, c_bool(True))
+        self.dwf.FDwfAnalogOutNodeFunctionSet (self.hdwf, channel, AnalogOutNodeCarrier, funcCustom)
+        #self.dwf.FDwfAnalogOutNodeDataSet     (self.hdwf, channel, AnalogOutNodeCarrier, rgdSamples, c_int(cSamples))
+        self.dwf.FDwfAnalogOutNodeDataSet     (self.hdwf, channel, AnalogOutNodeCarrier, self.custom_data, self.custom_len)
+        self.dwf.FDwfAnalogOutNodeFrequencySet(self.hdwf, channel, AnalogOutNodeCarrier, c_double(freq))
+        self.dwf.FDwfAnalogOutNodeAmplitudeSet(self.hdwf, channel, AnalogOutNodeCarrier, c_double(amp))
+        self.dwf.FDwfAnalogOutNodeOffsetSet   (self.hdwf, channel, AnalogOutNodeCarrier, c_double(offset))
+        self.dwf.FDwfAnalogOutConfigure       (self.hdwf, channel, c_bool(True))
 
 #x = DigilentAnalogDiscovery()
 #x.enable_prints()

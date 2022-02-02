@@ -5,48 +5,175 @@ import serial
 import sys
 import math
 import time
+import random
 from matplotlib.pyplot import *
 from scipy.signal import *
 
 from dad import *
 
-def read_hw_uart(device, num_samples, signed):
-    ser = serial.Serial(device, 115200)
-    print(ser.name)
-    start = time.time()
-    ser.write(b's')
-    samples = [0]*num_samples
-    for x in range(num_samples):
-        line = ser.readline()
-        line = line.decode('utf-8')
-        line = line.strip()
-        #print(line)
-        samples[x] = int(line,16)
-        if(signed == 1 and (samples[x] & (1 << 23))): #todo change bit
-            samples[x] -= (1 << 24)
-        print(line + " = " + str(samples[x]))
-    end = time.time()
-    ser.close()
-    print("read from uart, time: ", end-start)
-    return samples
+class HwTest:
+    
+    def __init__(self):
+        use_dad = 0
+        self.set_FPGA_params()
+        self.set_WVFM_params()
 
-def dft(samples, DFT_SIZE, SAMP_FREQ):
-    XQ = [0]*DFT_SIZE
-    XI = [0]*DFT_SIZE
+    # Set FPGA parameters to match HW build
+    def set_FPGA_params(self,
+                        num_samples=1024,
+                        bosr=1024,
+                        cic_stages=2,
+                        bclk=50000000,
+                        bits=24,
+                        vcc=2.5,
+                        signed_output=True,
+                        uart='/dev/ttyS2',
+                        baud=115200):
+        self.FPGA_num_samples   = num_samples
+        self.FPGA_bosr          = bosr
+        self.FPGA_cic_stages    = cic_stages
+        self.FPGA_bclk          = bclk
+        self.FPGA_bits          = bits
+        self.FPGA_vcc           = vcc
+        self.FPGA_signed_output = signed_output
+        self.FPGA_uart          = uart
+        self.FPGA_baud          = baud
 
-    for k in range(DFT_SIZE):
-        for n in range(DFT_SIZE):
-            XQ[k] = XQ[k] + samples[n] * (math.cos(2*3.14*k*n/DFT_SIZE))
-            XI[k] = XI[k] + samples[n] * -1 * (math.sin(2*3.14*k*n/DFT_SIZE))
+    # Setup parameters of incoming signal for analysis
+    def set_WVFM_params(self,
+                        freq = 440,
+                        amp=1.0,
+                        sweep_start = 110,
+                        sweep_mult = 2**(1.0/12.0),
+                        sweep_steps = 80,
+                        dft_size=1024):
+        self.WVFM_freq        = freq
+        self.WVFM_amp         = amp
+        self.WVFM_sweep_start = sweep_start
+        self.WVFM_sweep_steps = sweep_steps
+        self.WVFM_sweep_mult  = sweep_mult
+        self.WVFM_dft_size    = dft_size
 
-    XM = [0]*((DFT_SIZE>>1)-1)
-    Xf = [0]*((DFT_SIZE>>1)-1)
+    def dump_params(self):
+        print('-'*20 + " FPGA Parameters " + '-'*20)
+        print(f"*  {self.FPGA_num_samples   = }")
+        print(f"*  {self.FPGA_bosr          = }")
+        print(f"*  {self.FPGA_cic_stages    = }")
+        print(f"*  {self.FPGA_bclk          = }")
+        print(f"*  {self.FPGA_bits          = }")
+        print(f"*  {self.FPGA_vcc           = }")
+        print(f"*  {self.FPGA_signed_output = }")
+        print(f"*  {self.FPGA_uart          = }")
+        print(f"*  {self.FPGA_baud          = }")
 
-    for k in range(1, (DFT_SIZE>>1)-1):
-        Xf[k] = k * SAMP_FREQ / DFT_SIZE
-        XM[k] = math.sqrt(XQ[k]**2 + XI[k]**2)
+        print('-'*20 + " WVFM Parameters " + '-'*20)
+        print(f"*  {self.WVFM_freq        = }")
+        print(f"*  {self.WVFM_amp         = }")
+        print(f"*  {self.WVFM_sweep_start = }")
+        print(f"*  {self.WVFM_sweep_steps = }")
+        print(f"*  {self.WVFM_sweep_mult  = }")
+        print(f"*  {self.WVFM_dft_size    = }")
 
-    return Xf, XM
+    # Use Digilent Device
+    def open_dad(self):
+        self.dad = DigilentAnalogDiscovery()
+        self.dad.open_device()
+        self.use_dad = 1
+
+    def close_dad(self):
+        if(self.use_dad):
+            self.dad.close_device()
+
+    def setup_dad_waveform(self):
+        if(self.use_dad):
+            self.dad.wavegen_config_sine_out(freq=self.WVFM_freq, amp=self.WVFM_amp)
+    
+    # Read lines from FPGA serial port, can lock up easily
+    def read_serial(self):
+        ser = serial.Serial(self.FPGA_uart, self.FPGA_baud)
+        # has to match FPGA
+        ser.write(b's')
+        lines = []
+        for i in range(self.FPGA_num_samples):
+            lines.append(ser.readline())
+        ser.close()
+        return lines
+
+    # Convert ascii lines to integers
+    def decode_serial(self, lines):
+        samples = []
+        for line in lines:
+            decoded_stripped = line.decode('utf-8')
+            decoded_stripped = decoded_stripped.strip()
+            integer = int(line, 16)
+            if(self.FPGA_signed_output == True and (integer & (1 << self.FPGA_bits-1))):
+                integer -= (1 << self.FPGA_bits)
+            samples.append(integer)
+        return samples
+
+    # Convert digital output to float voltage value
+    def get_voltages(self, samples):
+        voltages = []
+        for sample in samples:
+            v = sample * self.FPGA_vcc
+            for i in range(self.FPGA_cic_stages):
+                v /= self.FPGA_bosr
+            voltages.append(v)
+        return voltages
+    
+    # Convert array of samples to single amplitude = peak-peak / 2
+    def get_amplitude(self, samples):
+        low = samples[0]
+        high = samples[0]
+        for x in range(1, len(samples)):
+            if(samples[x] < low):
+                low = samples[x];
+            if(samples[x] > high):
+                high = samples[x];
+        return ((high-low)/2)
+
+    # Get DC value
+    def get_dc(self, samples):
+        return (sum(samples)/len(samples))
+
+    # Calculate DFT, skips DC bin
+    def get_dft(self, samples):
+        XQ = [0]*self.WVFM_dft_size
+        XI = [0]*self.WVFM_dft_size
+
+        for k in range(self.WVFM_dft_size):
+            for n in range(self.FPGA_num_samples):
+                XQ[k] = XQ[k] + samples[n] * (math.cos(2*3.14*k*n/self.WVFM_dft_size))
+                XI[k] = XI[k] + samples[n] * -1 * (math.sin(2*3.14*k*n/self.WVFM_dft_size))
+
+        XM = [0]*((self.WVFM_dft_size>>1)-1)
+        Xf = [0]*((self.WVFM_dft_size>>1)-1)
+
+        sample_freq = self.FPGA_bclk / self.FPGA_bosr
+
+        for k in range((self.WVFM_dft_size>>1)-1):
+            Xf[k] = k * sample_freq / self.WVFM_dft_size
+            XM[k] = math.sqrt(XQ[k+1]**2 + XI[k+1]**2) / self.WVFM_dft_size
+
+        return Xf, XM
+    
+    # Crude SFDR function
+    def get_sfdr(self, mags):
+        highest = mags[0]
+        highest_idx = 0
+        highest2nd = mags[0]
+        highest2nd_idx = 0
+        for i in range(1,len(mags)):
+            if(mags[i] > highest):
+                highest_idx = i
+                highest = mags[i]
+        for i in range(0,len(mags)):
+            if(i != highest_idx and mags[i] > highest2nd):
+                highest2nd = mags[i]
+                highest2nd_idx = i
+        return highest, highest2nd
+
+
 
 def filter(samples, samp_freq):
     nyq_rate = samp_freq / 2
@@ -57,48 +184,8 @@ def filter(samples, samp_freq):
     taps = firwin(N, cutoff_hz/nyq_rate, window=('kaiser', beta))
     return lfilter(taps, 1.0, samples)
 
-def get_amplitude(samples):
-    low = samples[0]
-    high = samples[0]
-    for x in range(1, len(samples)):
-        if(samples[x] < low):
-            low = samples[x];
-        if(samples[x] > high):
-            high = samples[x];
-    return ((high-low)/2)
 
 def oneshot_run(freq, amp, uart_device, num_samples, signed=0, filter=0):
-    dad = DigilentAnalogDiscovery()
-    dad.open_device()
-    dad.wavegen_config_sine_out(freq=freq, amp=amp)
-    samples = read_hw_uart(uart_device, num_samples, signed)
-    dad.close_device()
-
-    for x in range(num_samples):
-        samples[x] = samples[x] * vcc / (bosr*bosr) 
-    amp = get_amplitude(samples)
-    mid = sum(samples) / len(samples)
-    
-    stdev = 0
-    for x in range(num_samples):
-        stdev = stdev + ((samples[x] - mid)**2.0)
-    stdev /= num_samples
-    stdev = stdev ** 0.5;
-
-
-    
-    print("Amplitude measured: " + str(amp))
-    print("DC measured: " + str(mid))
-    print("Stdev measured: " + str(stdev))
-    print("SNR: " + str((mid**2)/(stdev**2)))
-    
-    Xf, XM = dft(samples, num_samples, samp_freq)
-
-    fig,axs = subplots(2,1)
-    axs[0].plot(samples)
-    axs[0].set_title("Hardware Data")
-    axs[1].plot(Xf, XM)
-    axs[1].set_title("FFT")
 
     if(filter):
         samples_filtered = filter(samples, samp_freq)
@@ -109,55 +196,97 @@ def oneshot_run(freq, amp, uart_device, num_samples, signed=0, filter=0):
         axs[1].plot(Xf_f, XM_f)
         axs[1].set_title("FFT")
 
-    tight_layout()
-    show()
 
 #def bode_plot(samples, num_samples, samp_freq, bosr, vcc, filter):
-        
+def oneshot(hw):
+    # adjust fundamental to exact bin
+    hw.WVFM_dft_size = 1024
+    delta = (hw.FPGA_bclk / hw.FPGA_bosr) / hw.WVFM_dft_size
+    nearest_bin = hw.WVFM_freq / delta
+    new_freq = round(nearest_bin)*delta
+    print(f"{new_freq=}")
+    hw.WVFM_freq = new_freq
+    # config device
+    hw.open_dad()
+    #hw.setup_dad_waveform()
+    
+    samp_clk = hw.FPGA_bclk / hw.FPGA_bosr
+    custom_len = round(samp_clk / new_freq)
+    hw.dad.setup_custom_data(custom_len)
+    for i in range(custom_len):
+        hw.dad.custom_data[i] = math.cos(2*3.14*new_freq*i/samp_clk)
 
-func_freq = 880
-func_amp = 1
-num_samples = 1024
-device = '/dev/ttyS2'
-bosr = 1024
-samp_freq = 50000000 / bosr
-vcc = 2.5
-signed = 1
+    # fuzz with noise
+    noise_amp = 0.1
+    for i in range(custom_len):
+        noise = noise_amp*random.randrange(-100,100,1)/100
+        hw.dad.custom_data[i] += noise
 
-start_freq = 220
-num_steps = 5
-log_step = 2.0**(1.0/12.0)
+    hw.dad.wavegen_config_custom_out(0, hw.WVFM_freq, hw.WVFM_amp, 0)
+    #hw.dad.wavegen_config_sine_out(freq=hw.WVFM_freq, amp=hw.WVFM_amp)
 
-if(len(sys.argv) == 2 and sys.argv[1] == 'o'):
-    oneshot_run(func_freq, func_amp, device, num_samples, signed, 0)
-    exit()
-
-if(len(sys.argv) == 2 and sys.argv[1] == 'f'):
-    start_freq = 110
-    freq = start_freq
-    amp = 0.5
-    log_step = 2.0**(1.0/12.0)
-    num_steps = 90
-    amps = [0]*num_steps
-    freqs = [0]*num_steps
-    dad = DigilentAnalogDiscovery()
-    dad.open_device()
-    for x in range(num_steps):
-        print("Loop iteration: " + str(x) + " freq = ", str(freq))
-        dad.wavegen_config_sine_out(freq=freq, amp=amp)
-        samples = read_hw_uart(device, num_samples)
-        for j in range(num_samples):
-            samples[j] = samples[j] * vcc / (bosr*bosr) 
-        amps[x] = get_amplitude(samples) / amp
-        freqs[x] = freq
-        freq = freq * log_step
-    dad.close_device()
-    figure()
-    plot(freqs, amps)
-    ylim([0, 1.5])
-    title("Bode Plot")
+    # read sample buffer
+    samples = hw.decode_serial(hw.read_serial())
+    # convert
+    voltages = hw.get_voltages(samples)
+    amplitude = hw.get_amplitude(voltages)
+    dc = hw.get_dc(voltages)
+    # get dft
+    dft_freqs, dft_mags = hw.get_dft(voltages)
+    # show params
+    hw.dump_params()
+    # print
+    print("Amplitude: " + str(amplitude))
+    print("DC: " + str(dc))
+    x,y = hw.get_sfdr(dft_mags)
+    snr = x/y
+    print("Highest FFT: " + str(x))
+    print("Second Highest FFT: " + str(y))
+    print("SNR: " + str(snr))
+    # plot
+    subplot(211)
+    plot(voltages)
+    title("Hardware Data")
+    subplot(212)
+    plot(dft_freqs, dft_mags)
+    title("FFT")
     tight_layout()
     show()
+    hw.close_dad()
+        
+hw = HwTest()
+oneshot(hw)
+
+#if(len(sys.argv) == 2 and sys.argv[1] == 'o'):
+#    oneshot_run(func_freq, func_amp, device, num_samples, signed, 0)
+#    exit()
+#
+#if(len(sys.argv) == 2 and sys.argv[1] == 'f'):
+#    start_freq = 110
+#    freq = start_freq
+#    amp = 0.5
+#    log_step = 2.0**(1.0/12.0)
+#    num_steps = 90
+#    amps = [0]*num_steps
+#    freqs = [0]*num_steps
+#    dad = DigilentAnalogDiscovery()
+#    dad.open_device()
+#    for x in range(num_steps):
+#        print("Loop iteration: " + str(x) + " freq = ", str(freq))
+#        dad.wavegen_config_sine_out(freq=freq, amp=amp)
+#        samples = read_hw_uart(device, num_samples)
+#        for j in range(num_samples):
+#            samples[j] = samples[j] * vcc / (bosr*bosr) 
+#        amps[x] = get_amplitude(samples) / amp
+#        freqs[x] = freq
+#        freq = freq * log_step
+#    dad.close_device()
+#    figure()
+#    plot(freqs, amps)
+#    ylim([0, 1.5])
+#    title("Bode Plot")
+#    tight_layout()
+#    show()
 
 
 
