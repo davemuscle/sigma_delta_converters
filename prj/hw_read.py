@@ -141,6 +141,7 @@ class HwTest:
         sq_sum = 0
         for x in samples:
             sq_sum += (x**2)
+        sq_sum /= len(samples)
         return math.sqrt(sq_sum)
 
     # Calculate DFT, skips DC bin
@@ -214,22 +215,24 @@ def oneshot(hw):
     custom_len = round(samp_clk / hw.WVFM_freq)
     hw.dad.setup_custom_data(custom_len)
     # create noise signal
-    noise_amp = 0.05
+    noise_amp = 0.1
     for i in range(custom_len):
         noise = noise_amp*random.randrange(-100,100,1)/100
         hw.dad.custom_data[i] += noise
     
     # get rms of the noise only
     hw.dad.wavegen_config_custom_out(0, hw.WVFM_freq, hw.WVFM_amp, 0)
+    time.sleep(0.1)
     samples = hw.decode_serial(hw.read_serial())
-    voltages = hw.get_voltages(samples)
-    noise_rms = hw.get_rms(voltages)
+    noise_voltages = hw.get_voltages(samples)
+    noise_rms = hw.get_rms(noise_voltages)
 
     # add in the signal (sine wave)
     for i in range(custom_len):
         hw.dad.custom_data[i] += math.cos(2*3.14*hw.WVFM_freq*i/samp_clk)
 
     hw.dad.wavegen_config_custom_out(0, hw.WVFM_freq, hw.WVFM_amp, 0)
+    time.sleep(0.1)
     #hw.dad.wavegen_config_sine_out(freq=hw.WVFM_freq, amp=hw.WVFM_amp)
 
     # read sample buffer
@@ -250,10 +253,13 @@ def oneshot(hw):
     print("RMS Noise: "+ str(noise_rms))
     print("SNR: " + str((rms**2)/(noise_rms**2)))
     # plot
-    subplot(211)
+    subplot(311)
+    plot(noise_voltages)
+    title("Noise")
+    subplot(312)
     plot(voltages)
     title("Hardware Data")
-    subplot(212)
+    subplot(313)
     plot(dft_freqs, dft_mags)
     title("FFT")
     tight_layout()
