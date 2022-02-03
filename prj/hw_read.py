@@ -196,6 +196,7 @@ def filter(samples, samp_freq):
     taps = firwin(N, cutoff_hz/nyq_rate, window=('kaiser', beta))
     return lfilter(taps, 1.0, samples)
 
+# send in a signal, record it, and print/plot the result and FFT
 def test_normal(hw):
     # config device, setup wavegen
     hw.open_dad()
@@ -236,15 +237,14 @@ def test_normal(hw):
     show()
     hw.close_dad()
 
+# record ambient noise, a clean signal, and a noisy signal then print/plot results
 def test_measurement(hw):
     # config device
     hw.open_dad()
     # get the next available frequency based on FFT
     hw.match_dft_bin_freq();
-
     # record ambient noise
     ambient_samples = hw.decode_serial(hw.read_serial())
-
     # create clean signal then record it
     custom_len = round(hw.FPGA_sclk / hw.WVFM_freq)
     hw.dad.setup_custom_data(custom_len)
@@ -253,7 +253,6 @@ def test_measurement(hw):
     hw.dad.wavegen_config_custom_out(0, hw.WVFM_freq, hw.WVFM_amp, 0)
     time.sleep(0.1)
     clean_samples = hw.decode_serial(hw.read_serial())
-
     # add noise clean signal then record it
     noise_amp = 0.1
     for i in range(custom_len):
@@ -262,34 +261,28 @@ def test_measurement(hw):
     hw.dad.wavegen_config_custom_out(0, hw.WVFM_freq, hw.WVFM_amp, 0)
     time.sleep(0.1)
     dirty_samples = hw.decode_serial(hw.read_serial())
-   
-    # gather measurements
+    # gather ambient measurements
     ambient_voltages = hw.get_voltages(ambient_samples)
-    clean_voltages = hw.get_voltages(clean_samples)
-    dirty_voltages = hw.get_voltages(dirty_samples)
-
     ambient_amp = hw.get_amplitude(ambient_voltages)
-    clean_amp   = hw.get_amplitude(clean_voltages)
-    dirty_amp   = hw.get_amplitude(dirty_voltages)
-    
     ambient_dc = hw.get_dc(ambient_voltages)
-    clean_dc   = hw.get_dc(clean_voltages)
-    dirty_dc   = hw.get_dc(dirty_voltages)
-
     ambient_rms = hw.get_rms(ambient_voltages)
-    clean_rms   = hw.get_rms(clean_voltages)
-    dirty_rms   = hw.get_rms(dirty_voltages)
-
     ambient_dft_freqs, ambient_dft_mags, ambient_dft_mags_log = hw.get_dft(ambient_voltages)
+    # gather clean measurements
+    clean_voltages = hw.get_voltages(clean_samples)
+    clean_amp   = hw.get_amplitude(clean_voltages)
+    clean_dc   = hw.get_dc(clean_voltages)
+    clean_rms   = hw.get_rms(clean_voltages)
     clean_dft_freqs, clean_dft_mags, clean_dft_mags_log       = hw.get_dft(clean_voltages)
-    dirty_dft_freqs, dirty_dft_mags, dirty_dft_mags_log       = hw.get_dft(dirty_voltages)
-
     clean_snr = hw.get_snr(clean_dft_mags)
+    # gather noise measurements
+    dirty_voltages = hw.get_voltages(dirty_samples)
+    dirty_amp   = hw.get_amplitude(dirty_voltages)
+    dirty_dc   = hw.get_dc(dirty_voltages)
+    dirty_rms   = hw.get_rms(dirty_voltages)
+    dirty_dft_freqs, dirty_dft_mags, dirty_dft_mags_log       = hw.get_dft(dirty_voltages)
     dirty_snr = hw.get_snr(dirty_dft_mags)
-
     # print out
     hw.dump_params()
-
     print('-'*20 + " Ambient Results " + '-'*20)
     print("*  Amp(V): " + str(ambient_amp))
     print("*   DC(V): " + str(ambient_dc))
@@ -310,7 +303,6 @@ def test_measurement(hw):
     print("*  Max (V): " + str(max(dirty_voltages)))
     print("*  Min (V): " + str(min(dirty_voltages)))
     print("*  SNR (dB): " + str(dirty_snr))
-
     # plot
     subplot(321)
     plot(ambient_voltages)
@@ -325,7 +317,6 @@ def test_measurement(hw):
     ylabel('Magnitude (dB)')
     xscale('log')
     grid()
-    
     subplot(323)
     plot(clean_voltages)
     grid()
@@ -339,7 +330,6 @@ def test_measurement(hw):
     ylabel('Magnitude (dB)')
     xscale('log')
     grid()
-
     subplot(325)
     plot(dirty_voltages)
     grid()
@@ -353,16 +343,50 @@ def test_measurement(hw):
     ylabel('Magnitude (dB)')
     xscale('log')
     grid()
-
     tight_layout()
     show()
     # close device
     hw.close_dad()
-
        
+def test_bode(hw):
+    # build up list of frequencies
+    hw.WVFM_sweep_steps = 80
+    freqs = [0]*hw.WVFM_sweep_steps
+    amps = []
+    freqs[0] = hw.WVFM_sweep_start
+    for i in range(1,hw.WVFM_sweep_steps):
+        freqs[i] = freqs[i-1] * hw.WVFM_sweep_mult
+    # open device
+    hw.open_dad()
+    # record samples for each freq and store amplitude
+    for freq in freqs:
+        hw.WVFM_freq = freq
+        hw.setup_dad_waveform()
+        time.sleep(0.1)
+        samples = hw.decode_serial(hw.read_serial())
+        voltages = hw.get_voltages(samples)
+        amps.append(hw.get_amplitude(voltages))
+    # convert amplitudes to gain in dB
+    for i in range(hw.WVFM_sweep_steps):
+        amps[i] = 20*math.log(amps[i] / hw.WVFM_amp) 
+    # plot
+    plot(freqs, amps)
+    #xscale('log')
+    title('Bode Plot')
+    xlabel('Frequency (Hz)')
+    ylabel('Gain (dB)')
+    show()
+    tight_layout()
+    hw.close_dad()
+
+
+
 hw = HwTest()
-#test_normal(hw)
-test_measurement(hw)
+hw.WVFM_freq = int(sys.argv[1])
+test_normal(hw)
+
+#test_measurement(hw)
+#test_bode(hw)
 
 #if(len(sys.argv) == 2 and sys.argv[1] == 'o'):
 #    oneshot_run(func_freq, func_amp, device, num_samples, signed, 0)
