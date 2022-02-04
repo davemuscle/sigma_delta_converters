@@ -14,14 +14,14 @@ module sigma_delta_adc_tb;
     localparam ADC_BITLEN = 24;
     //localparam ADC_BITLEN = 2 + $ceil(CIC_STAGES * $clog2(OVERSAMPLE_RATE));
     localparam SIGNED_OUTPUT = 1;
-    localparam DC_BLOCK_SHIFT = 7;
+    localparam DC_BLOCK_SHIFT = 10;
 
     localparam VCC = 2.5;
     localparam CAP_FUDGE = 128;
     localparam BCLK = SCLK*OVERSAMPLE_RATE;
     localparam FREQ = 440;
     localparam SCALE = 0.99*VCC;
-    localparam NUM_OUTPUT_SAMPLES = 1024;
+    localparam NUM_OUTPUT_SAMPLES = 256;
 
     initial begin
         $display("Calculated %-d for ADC calculation width", ADC_BITLEN);

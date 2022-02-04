@@ -350,7 +350,9 @@ def test_measurement(hw):
        
 def test_bode(hw):
     # build up list of frequencies
-    hw.WVFM_sweep_steps = 80
+    hw.VWFM_sweep_start = 440
+    hw.WVFM_sweep_mult = 2**(4.0/12.0)
+    hw.WVFM_sweep_steps = 30
     freqs = [0]*hw.WVFM_sweep_steps
     amps = []
     freqs[0] = hw.WVFM_sweep_start
@@ -371,7 +373,7 @@ def test_bode(hw):
         amps[i] = 20*math.log(amps[i] / hw.WVFM_amp) 
     # plot
     plot(freqs, amps)
-    #xscale('log')
+    xscale('log')
     title('Bode Plot')
     xlabel('Frequency (Hz)')
     ylabel('Gain (dB)')
@@ -382,11 +384,11 @@ def test_bode(hw):
 
 
 hw = HwTest()
-hw.WVFM_freq = int(sys.argv[1])
-test_normal(hw)
-
+#hw.set_FPGA_params(signed_output=True)
+#hw.WVFM_freq = int(sys.argv[1])
+#test_normal(hw)
 #test_measurement(hw)
-#test_bode(hw)
+test_bode(hw)
 
 #if(len(sys.argv) == 2 and sys.argv[1] == 'o'):
 #    oneshot_run(func_freq, func_amp, device, num_samples, signed, 0)

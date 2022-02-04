@@ -18,7 +18,7 @@ module top
         .CIC_STAGES(2),
         .ADC_BITLEN(24),
         .SIGNED_OUTPUT(1),
-        .DC_BLOCK_SHIFT(7)
+        .DC_BLOCK_SHIFT(10)
     ) dut (
         .clk(clk),
         .rst(1'b0),

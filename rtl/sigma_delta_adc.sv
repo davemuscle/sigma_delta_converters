@@ -128,33 +128,26 @@ module sigma_delta_adc #(
     end
 
     //Compensation FIR
-    bit signed [ADC_BITLEN-1:0] in_signed = 0;
-    bit unsigned [ADC_BITLEN-1:0] in_unsigned = 0;
-    bit [ADC_BITLEN-1:0] shifted_8, shifted_2 = 0;
-    bit [ADC_BITLEN-1:0] d1 = 0;
-    bit [ADC_BITLEN-1:0] d2 = 0;
-    bit [ADC_BITLEN-1:0] sum = 0;
-    always_comb begin
-        in_signed = signed'(d1);
-        in_unsigned = unsigned'(d1);
-        //only works for 2 stages
-        if(SIGNED_OUTPUT == 1) begin
-            shifted_8 = in_signed <<< 1;
-            shifted_2 = in_signed <<< 1;
-        end
-        else begin
-            shifted_8 = in_unsigned <<< 1;
-            shifted_2 = in_unsigned <<< 1;
-        end
-    end
+    //alpha = 0.25
+    // h = (-a / 2) * (n'' + n) + (1+a)*n'
+    bit signed [ADC_BITLEN-1:0] d1, d2;
+    bit signed [ADC_BITLEN-1:0] comp_sum, comp_dly;
+
     always_ff @(posedge clk) begin
         adc_valid <= 0;
         if(adc_pre_valid) begin
-            d1 <= adc_pre_output;
-            d2 <= d1;
-            sum <= d2 + adc_pre_output - shifted_8 - shifted_2;
-            adc_valid <= 1;
-            adc_output <= sum;
+            if(SIGNED_OUTPUT == 1) begin
+                d1 <= adc_pre_output;
+                d2 <= d1;
+                comp_dly <= d1 + (d1 >>> 2);
+                comp_sum <= ~(d2 + adc_pre_output) + 1;
+                adc_output <= comp_dly + (comp_sum >>> 3);
+                adc_valid <= 1;
+            end
+            else begin
+                adc_output <= adc_pre_output;
+                adc_valid <= 1;
+            end
         end
     end
 

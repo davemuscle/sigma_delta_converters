@@ -64,7 +64,6 @@ class DigilentAnalogDiscovery:
         self.dwf.FDwfDeviceAutoConfigureSet   (self.hdwf, channel)
         self.dwf.FDwfAnalogOutNodeEnableSet   (self.hdwf, channel, AnalogOutNodeCarrier, c_bool(True))
         self.dwf.FDwfAnalogOutNodeFunctionSet (self.hdwf, channel, AnalogOutNodeCarrier, funcCustom)
-        #self.dwf.FDwfAnalogOutNodeDataSet     (self.hdwf, channel, AnalogOutNodeCarrier, rgdSamples, c_int(cSamples))
         self.dwf.FDwfAnalogOutNodeDataSet     (self.hdwf, channel, AnalogOutNodeCarrier, self.custom_data, self.custom_len)
         self.dwf.FDwfAnalogOutNodeFrequencySet(self.hdwf, channel, AnalogOutNodeCarrier, c_double(freq))
         self.dwf.FDwfAnalogOutNodeAmplitudeSet(self.hdwf, channel, AnalogOutNodeCarrier, c_double(amp))

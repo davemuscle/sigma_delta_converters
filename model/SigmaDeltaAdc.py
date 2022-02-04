@@ -61,11 +61,13 @@ def cic_compensator_a(samples, a):
     d2 = 0
     d = []
     for x in samples:
-        y = (-1*a/2)*d2  + (1+a)*d1
+        y = (-1*a/2)*(d2+x)  + (1+a)*d1
         d.append(y)
-        d2 = d1 + x
+        d2 = d1
         d1 = x
     return d
+
+#def remove_dc(samples):
 
 def generate_input(scale, num_samples, freq, sample_rate):
     x = [0]*num_samples
@@ -77,7 +79,7 @@ class SigmaDeltaAdc:
     _vcc = 0.0
 
     _bosr = 256
-    _cic_stages = 1
+    _cic_stages = 2
     _sclk = 44800
     _num_samples = 256
     _freq = 440
@@ -104,7 +106,7 @@ class SigmaDeltaAdc:
         digital_out = cic_compensator(digital_out, self._cic_stages)
         # convert to voltage
         analog_out = []
-        for x in bits_filtered:
+        for x in digital_out:
             analog_out.append(x * self._vcc / (self._bosr ** self._cic_stages))
         # remove transient
         for x in range(25):
@@ -157,7 +159,7 @@ class SigmaDeltaAdc:
             analog_out_unc = []
             for x in analog_out:
                 analog_out_unc.append(x)
-            analog_out = cic_compensator_a(analog_out, 0.2)
+            analog_out = cic_compensator_a(analog_out, 0.25)
             for x in range(25):
                 analog_out.pop(0)
                 analog_out_unc.pop(0)
@@ -176,6 +178,6 @@ class SigmaDeltaAdc:
         pylab.show()
 
 x = SigmaDeltaAdc(2.5)
-#x.run()
-x.sweep()
+x.run()
+#x.sweep()
 
