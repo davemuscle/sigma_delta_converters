@@ -69,11 +69,6 @@ def cic_compensator_a(samples, a):
 
 #def remove_dc(samples):
 
-def generate_input(scale, num_samples, freq, sample_rate):
-    x = [0]*num_samples
-    for n in range(num_samples):
-        x[n] = scale*numpy.cos((2*numpy.pi*freq*n)/sample_rate)
-    return x
         
 class SigmaDeltaAdc:
     _vcc = 0.0
