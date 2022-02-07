@@ -126,13 +126,12 @@ module sigma_delta_adc #(
             adc_pre_valid  <= cic_vld;
         end
     end
-
+    
     //Compensation FIR
     //alpha = 0.25
     // h = (-a / 2) * (n'' + n) + (1+a)*n'
     bit signed [ADC_BITLEN-1:0] d1, d2;
     bit signed [ADC_BITLEN-1:0] comp_sum, comp_dly;
-
     always_ff @(posedge clk) begin
         adc_valid <= 0;
         if(adc_pre_valid) begin

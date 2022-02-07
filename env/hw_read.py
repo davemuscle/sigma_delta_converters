@@ -125,65 +125,8 @@ class HwTest:
                 v /= self.FPGA_bosr
             voltages.append(v)
         return voltages
-    
-    # Convert array of samples to single amplitude = peak-peak / 2
-    def get_amplitude(self, samples):
-        low = samples[0]
-        high = samples[0]
-        for x in range(1, len(samples)):
-            if(samples[x] < low):
-                low = samples[x];
-            if(samples[x] > high):
-                high = samples[x];
-        return ((high-low)/2)
 
-    # Get DC value
-    def get_dc(self, samples):
-        return (sum(samples)/len(samples))
 
-    # Get RMS of the set
-    def get_rms(self, samples):
-        sq_sum = 0
-        for x in samples:
-            sq_sum += (x**2)
-        sq_sum /= len(samples)
-        return math.sqrt(sq_sum)
-
-    # Calculate DFT, skips DC bin
-    def get_dft(self, samples):
-        XQ = [0]*self.WVFM_dft_size
-        XI = [0]*self.WVFM_dft_size
-
-        for k in range(self.WVFM_dft_size):
-            for n in range(self.FPGA_num_samples):
-                XQ[k] = XQ[k] + samples[n] * (math.cos(2*3.14*k*n/self.WVFM_dft_size))
-                XI[k] = XI[k] + samples[n] * -1 * (math.sin(2*3.14*k*n/self.WVFM_dft_size))
-
-        XM   = [0]*((self.WVFM_dft_size>>1)-1)
-        Xf   = [0]*((self.WVFM_dft_size>>1)-1)
-        XM_l = [0]*len(XM)
-
-        sample_freq = self.FPGA_bclk / self.FPGA_bosr
-
-        for k in range((self.WVFM_dft_size>>1)-1):
-            Xf[k] = k * sample_freq / self.WVFM_dft_size
-            XM[k] = math.sqrt(XQ[k+1]**2 + XI[k+1]**2) / (self.WVFM_dft_size/2)
-            XM_l[k] = 20*math.log10(XM[k] / hw.WVFM_amp)
-
-        return Xf, XM, XM_l
-
-    # Get frequency closest to DFT bin 
-    def match_dft_bin_freq(self):
-        self.WVFM_freq = self.WVFM_dft_fbin * self.WVFM_dft_delta
-
-    # Get signal-to-noise ratio via DFT magnitudes
-    def get_snr(self, mags):
-        idx = self.WVFM_dft_fbin - 1
-        top = mags[idx]
-        mags[idx] = 0
-        low = self.get_rms(mags)
-        mags[idx] = top
-        return 20*math.log10(top/low)
 
 
 

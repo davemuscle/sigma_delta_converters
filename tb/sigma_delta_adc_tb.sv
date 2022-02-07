@@ -14,11 +14,26 @@ module sigma_delta_adc_tb #(
     //tb params
     parameter int    DUMP_VCD    = 0,
     parameter int    BCLK        = 12880000,
+    parameter int    NUM_CYCLES  = 10,
     parameter real   VCC         = 2.5,
+    parameter real   FREQUENCY   = 440.0,
+    parameter real   AMPLITUDE   = 1.0,
+    parameter real   OFFSET      = 1.25,
     parameter string INPUT_FILE  = "test_input.txt",  //expected raw floats representing voltage
     parameter string OUTPUT_FILE = "test_output.txt" //same as above
 );
-    
+
+    bit sim_done = 0;
+    //testbench vcd dump and finish
+    initial begin
+        if(DUMP_VCD) begin
+            $dumpfile("dump.vcd");
+            $dumpvars;
+        end
+        wait(sim_done == 1);
+        $finish;
+    end
+   
     // print parameters
     initial begin
         $display("* Param: OVERSAMPLE_RATE=%-d", OVERSAMPLE_RATE);
@@ -42,35 +57,32 @@ module sigma_delta_adc_tb #(
             #(CLK_NS) clk <= 1;
         end
     end
-   
-    // read input from text file
-    bit finish_later = 0;
+
+    //generate sine wave
+    localparam int DC_WAIT_CLOCKS = CIC_STAGES*OVERSAMPLE_RATE;
+    localparam int NUM_SAMPLES = NUM_CYCLES * (BCLK / FREQUENCY);
     real adc_input;
     bit rst = 1;
+    bit enable_output = 0;
 
-    initial begin: file_input
-        int fd;
-        string line;
-        fd = $fopen(INPUT_FILE, "r");
-        if(fd) begin
-            rst = 0;
-            while(!$feof(fd)) begin
-                @(posedge clk);
-                void'($fgets(line, fd));
-                //convert to float
-                adc_input = line.atoreal();
-            end
+    initial begin
+        int sample_in;
+        sample_in = 0;
+        //reset and dc startup
+        repeat(5) @(posedge clk);
+        rst <= 0;
+        repeat(DC_WAIT_CLOCKS) @(posedge clk);
+        enable_output <= 1;
+        //generate
+        while(sample_in < NUM_SAMPLES) begin
+            adc_input <= AMPLITUDE*$cos(2.0*3.14*FREQUENCY*sample_in/BCLK) + OFFSET;
+            sample_in = sample_in + 1;
+            @(posedge clk);
         end
-        else begin
-            $error("Could not open input file: %s", INPUT_FILE);
-        end
-        $fclose(fd);
-        finish_later = 1;
     end
 
-    localparam CAP_FUDGE = 128;
-
     // lvds pin + integrator
+    localparam CAP_FUDGE = 128;
     real lvds_pin_p = 0.0;
     real lvds_pin_n = 0.0;
     real increase, decrease;
@@ -123,13 +135,18 @@ module sigma_delta_adc_tb #(
         .adc_valid(adc_valid)
     );
 
-    // file output stimulus
+    // file output for visual inspection
     initial begin: file_output
         int fd;
         int i;
         real adc_output_voltage;
+        real samples_out;
+        samples_out = 0;
         wait(rst == 0);
         fd = $fopen(OUTPUT_FILE, "w");
+        $fdisplay(fd, "rows=2, cols=1, title=sigma_delta_adc_tb");
+        $fdisplay(fd, "xlabel=sample, ylabel=voltage(V), title=input data, xtype=int, ytype=float");
+        $fdisplay(fd, "xlabel=sample, ylabel=voltage(V), title=output data, xtype=int, ytype=float");
         forever begin
             @(posedge adc_valid) begin
                 if(SIGNED_OUTPUT) begin
@@ -141,7 +158,16 @@ module sigma_delta_adc_tb #(
                 for(i = 0; i < CIC_STAGES; i = i + 1) begin
                     adc_output_voltage = adc_output_voltage / real'(OVERSAMPLE_RATE);
                 end
-                $fdisplay(fd, "%f", adc_output_voltage);
+                if(enable_output) begin
+                    //write output into file
+                    $fdisplay(fd, "%d, %f :: %d,%f", samples_out, adc_input, samples_out, adc_output_voltage);
+                    if(samples_out == int'(NUM_SAMPLES/OVERSAMPLE_RATE)-1) begin
+                        sim_done = 1;
+                    end
+                    else begin
+                        samples_out = samples_out + 1;
+                    end
+                end
             end
         end
         $fclose(fd);
@@ -149,15 +175,5 @@ module sigma_delta_adc_tb #(
     
     localparam FINISH_CLOCKS = OVERSAMPLE_RATE; //how many clocks to run after the end of the input file
 
-    //testbench start/stop
-    initial begin
-        if(DUMP_VCD) begin
-            $dumpfile("dump.vcd");
-            $dumpvars;
-        end
-        wait(finish_later);
-        repeat(FINISH_CLOCKS) @(posedge clk);
-        $finish;
-    end
 
 endmodule: sigma_delta_adc_tb
