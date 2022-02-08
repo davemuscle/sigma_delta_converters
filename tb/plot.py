@@ -5,31 +5,19 @@
 import sys
 from matplotlib.pyplot import *
 
-infile = open(sys.argv[1], "r")
-outfile = open(sys.argv[2], "r")
+for i in range(2):
+    # sys.argv[1] and sys.argv[2]
+    file = open(sys.argv[i+1], "r") 
+    lines = file.readlines()
+    file.close()
 
-inlines = infile.readlines()
-outlines = outfile.readlines()
+    data = [float(d) for d in lines]
 
-infile.close()
-outfile.close()
-
-indata = [float(d) for d in inlines]
-outdata = [float(d) for d in outlines]
-
-plottype = plot
-
-subplot(211)
-plottype([i for i in range(len(indata))], indata)
-xlabel('samples')
-ylabel('voltage(V)')
-title('input data')
-
-subplot(212)
-plottype([i for i in range(len(outdata))], outdata)
-xlabel('samples')
-ylabel('voltage(V)')
-title('output data')
+    subplot(210 + (i+1))
+    plot([x for x in range(len(data))], data)
+    xlabel('samples')
+    ylabel('voltage(V)')
+    title(sys.argv[i+1])
 
 tight_layout()
 show()

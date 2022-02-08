@@ -42,6 +42,9 @@ module sigma_delta_adc_tb #(
         $display("* Param: DC_BLOCK_SHIFT=%-d", DC_BLOCK_SHIFT);
         $display("* Param: SIGNED_OUTPUT=%-d", SIGNED_OUTPUT);
         $display("* Param: VCC=%f", VCC);
+        $display("* Param: FREQUENCY=%f", FREQUENCY);
+        $display("* Param: AMPLITUDE=%f", AMPLITUDE);
+        $display("* Param: OFFSET=%f", OFFSET);
         $display("* Param: BCLK=%-d", BCLK);
         $display("* Param: INPUT_FILE=%s", INPUT_FILE);
         $display("* Param: OUTPUT_FILE=%s", OUTPUT_FILE);
@@ -171,8 +174,5 @@ module sigma_delta_adc_tb #(
         end
         $fclose(fd);
     end
-    
-    localparam FINISH_CLOCKS = OVERSAMPLE_RATE; //how many clocks to run after the end of the input file
-
 
 endmodule: sigma_delta_adc_tb
