@@ -66,6 +66,7 @@ module sigma_delta_adc_tb #(
     bit enable_output = 0;
 
     initial begin
+        int fd;
         int sample_in;
         sample_in = 0;
         //reset and dc startup
@@ -73,12 +74,15 @@ module sigma_delta_adc_tb #(
         rst <= 0;
         repeat(DC_WAIT_CLOCKS) @(posedge clk);
         enable_output <= 1;
+        fd = $fopen(INPUT_FILE, "w");
         //generate
         while(sample_in < NUM_SAMPLES) begin
-            adc_input <= AMPLITUDE*$cos(2.0*3.14*FREQUENCY*sample_in/BCLK) + OFFSET;
+            adc_input = AMPLITUDE*$cos(2.0*3.14*FREQUENCY*sample_in/BCLK) + OFFSET;
             sample_in = sample_in + 1;
+            $fdisplay(fd, "%f", adc_input);
             @(posedge clk);
         end
+        $fclose(fd);
     end
 
     // lvds pin + integrator
@@ -144,10 +148,7 @@ module sigma_delta_adc_tb #(
         samples_out = 0;
         wait(rst == 0);
         fd = $fopen(OUTPUT_FILE, "w");
-        $fdisplay(fd, "rows=2, cols=1, title=sigma_delta_adc_tb");
-        $fdisplay(fd, "xlabel=sample, ylabel=voltage(V), title=input data, xtype=int, ytype=float");
-        $fdisplay(fd, "xlabel=sample, ylabel=voltage(V), title=output data, xtype=int, ytype=float");
-        forever begin
+        while(sim_done == 0) begin
             @(posedge adc_valid) begin
                 if(SIGNED_OUTPUT) begin
                     adc_output_voltage = real'(signed'(adc_output)) * real'(VCC);
@@ -159,13 +160,11 @@ module sigma_delta_adc_tb #(
                     adc_output_voltage = adc_output_voltage / real'(OVERSAMPLE_RATE);
                 end
                 if(enable_output) begin
+                    samples_out = samples_out + 1;
                     //write output into file
-                    $fdisplay(fd, "%d, %f :: %d,%f", samples_out, adc_input, samples_out, adc_output_voltage);
-                    if(samples_out == int'(NUM_SAMPLES/OVERSAMPLE_RATE)-1) begin
+                    $fdisplay(fd, "%f", adc_output_voltage);
+                    if(samples_out == int'(NUM_SAMPLES/OVERSAMPLE_RATE)) begin
                         sim_done = 1;
-                    end
-                    else begin
-                        samples_out = samples_out + 1;
                     end
                 end
             end
