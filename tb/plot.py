@@ -17,7 +17,7 @@ outfile.close()
 indata = [float(d) for d in inlines]
 outdata = [float(d) for d in outlines]
 
-plottype = step
+plottype = plot
 
 subplot(211)
 plottype([i for i in range(len(indata))], indata)
