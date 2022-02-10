@@ -135,7 +135,7 @@ module sigma_delta_adc #(
     always_ff @(posedge clk) begin
         adc_valid <= 0;
         if(adc_pre_valid) begin
-            if(SIGNED_OUTPUT == 1) begin
+            if(SIGNED_OUTPUT == 1 || SIGNED_OUTPUT == 0) begin
                 d1 <= adc_pre_output;
                 d2 <= d1;
                 comp_dly <= d1 + (d1 >>> 2);

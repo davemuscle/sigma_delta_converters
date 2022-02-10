@@ -17,7 +17,7 @@ module top
         .OVERSAMPLE_RATE(1024),
         .CIC_STAGES(2),
         .ADC_BITLEN(24),
-        .SIGNED_OUTPUT(1),
+        .SIGNED_OUTPUT(0),
         .DC_BLOCK_SHIFT(10)
     ) dut (
         .clk(clk),

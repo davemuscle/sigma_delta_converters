@@ -13,7 +13,7 @@ sim_params += CIC_STAGES=2
 sim_params += ADC_BITLEN=24
 sim_params += SIGNED_OUTPUT=0
 sim_params += DC_BLOCK_SHIFT=10
-sim_params += DUMP_VCD=0
+sim_params += DUMP_VCD=1
 sim_params += BCLK=12880000
 sim_params += NUM_CYCLES=4
 sim_params += VCC=3.3

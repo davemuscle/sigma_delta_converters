@@ -57,6 +57,34 @@ def get_voltages(samples):
         voltages.append(v)
     return voltages
 
+# Display whatever is on the pin
+def Test_Read():
+
+    samples = read_serial()
+    voltages = get_voltages(samples)
+    
+    samplerate = FPGA_BCLK / ADC_OVERSAMPLE_RATE
+    
+    dft_real, dft_imag = get_dft(voltages, samplerate, waveform_dft_size)
+    dft_freqs, dft_mags = get_dft_mags((dft_real, dft_imag), samplerate, waveform_dft_size)
+    dft_mags_log10 = [20*np.log10(i/1.0) for i in dft_mags]
+    
+    subplot(211)
+    plot(voltages)
+    grid()
+    title("Hardware Data")
+    xlabel('Samples')
+    ylabel('Voltage(V)')
+    subplot(212)
+    plot(dft_freqs, dft_mags_log10)
+    xscale('log')
+    grid()
+    title("FFT")
+    xlabel('Frequency (Hz)')
+    ylabel('Magnitude (dBV)')
+    tight_layout()
+    show()
+
 # send in a signal, record it, and print/plot the result and FFT
 def Test_Sine():
 
@@ -147,6 +175,7 @@ def Test_Measure():
     dft = [()]*3
     dft_mags_log10 = [[]]*3
     snr = [0]*3
+    thdn = [0]*3
     titles = ['Ambient', 'Clean', 'Noisy']
 
     for i in range(3):
@@ -157,6 +186,7 @@ def Test_Measure():
         dft[i] = get_dft_mags(get_dft(voltage[i], samplerate, waveform_dft_size), samplerate, waveform_dft_size)
         dft_mags_log10[i] = [20*np.log10(i/waveform_amplitude) for i in dft[i][1]]
         snr[i] = get_snr(dft[i][1])
+        thdn[i] = get_thdn(dft[i][1], freq, samplerate)
 
         print('-'*20 + " " + titles[i] + " Results " + '-'*20)
         print("*  Amp(V): " + str(amplitude[i]))
@@ -165,6 +195,7 @@ def Test_Measure():
         print("*  Max(V): " + str(max(voltage[i])))
         print("*  Min(V): " + str(min(voltage[i])))
         print("*  SNR (dB): " + str(snr[i]))
+        print("*  THDN  : " + str(thdn[i]))
 
         subplot(320 + (i*2) + 1)
         plot([i+1 for i in range(len(voltage[i]))], voltage[i])
@@ -214,7 +245,7 @@ def Test_Bode():
 
 # parse args
 parser = argparse.ArgumentParser(description = 'Hardware Test Script for ADC')
-parser.add_argument('--mode', metavar='mode',        nargs=1, help = 'mode = [sine, measure, bode]')
+parser.add_argument('--mode', metavar='mode',        nargs=1, help = 'mode = [read, sine, measure, bode]')
 parser.add_argument('--freq', metavar='frequency',   nargs=1, help = 'waveform frequency')
 parser.add_argument('--amp',  metavar='amplitude',   nargs=1, help = 'waveform amplitude')
 parser.add_argument('--start',metavar='sweep_start', nargs=1, help = 'waveform sweep start frequency')
@@ -238,6 +269,8 @@ if(args.dft):
     waveform_dft_size = int(args.steps[0])
 
 # run the script
+if(args.mode[0] == 'read'):
+    Test_Read()
 if(args.mode[0] == 'sine'):
     Test_Sine()
 if(args.mode[0] == 'measure'):
