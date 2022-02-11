@@ -66,7 +66,7 @@ module top
     bit sampling = 0;
     bit pushing = 0;
     
-    localparam NUM_SAMPLES = 1024;
+    localparam NUM_SAMPLES = 4096;
 
     bit [23:0] samples [NUM_SAMPLES-1:0];
     bit [31:0] sample_idx = 0;

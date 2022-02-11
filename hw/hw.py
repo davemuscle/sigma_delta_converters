@@ -17,7 +17,7 @@ ADC_BITLEN          = 24
 ADC_SIGNED_OUTPUT   = False
 
 # constants for FPGA build
-FPGA_NUM_SAMPLES = 1024
+FPGA_NUM_SAMPLES = 4096
 FPGA_BCLK        = 50000000
 FPGA_UART        = '/dev/ttyS2'
 FPGA_BAUD        = 115200
@@ -29,7 +29,7 @@ waveform_amplitude   = 1.0
 waveform_sweep_start = 220.0
 waveform_sweep_end   = 60000.0
 waveform_sweep_steps = 40
-waveform_dft_size    = 1024
+waveform_dft_size    = 2048
 
 # Read lines from FPGA serial port, can lock up easily
 def read_serial():
@@ -129,6 +129,7 @@ def Test_Sine():
     title("FFT")
     xlabel('Frequency (Hz)')
     ylabel('Magnitude (dB)')
+
     tight_layout()
     show()
 
@@ -180,12 +181,15 @@ def Test_Measure():
 
     for i in range(3):
         voltage[i] = get_voltages(samples[i])
+        if(ADC_SIGNED_OUTPUT == False):
+            voltage[i] = remove_dc(voltage[i])
+        voltage[i] = apply_tukey_window(voltage[i], 0.5)
         amplitude[i] = get_amplitude(voltage[i])
         dc[i] = get_dc(voltage[i])
         rms[i] = get_rms(voltage[i])
         dft[i] = get_dft_mags(get_dft(voltage[i], samplerate, waveform_dft_size), samplerate, waveform_dft_size)
         dft_mags_log10[i] = [20*np.log10(i/waveform_amplitude) for i in dft[i][1]]
-        snr[i] = get_snr(dft[i][1])
+        snr[i] = get_snr(dft[i][1], 4)
         thdn[i] = get_thdn(dft[i][1], freq, waveform_dft_size, samplerate)
 
         print('-'*20 + " " + titles[i] + " Results " + '-'*20)
