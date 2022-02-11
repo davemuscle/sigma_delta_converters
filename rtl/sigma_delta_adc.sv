@@ -65,7 +65,7 @@ module sigma_delta_adc #(
     //place cic decimator
     genvar i;
     generate
-        for(i = 0; i < CIC_STAGES; i = i + 1) begin
+        for(i = 0; i < CIC_STAGES; i = i + 1) begin: gen_cic
             cic_integrator #(
                 .WIDTH(ADC_BITLEN)
             ) cic_inst_u0 (
@@ -92,7 +92,7 @@ module sigma_delta_adc #(
 
     //place optional fir compensator
     generate
-    if(USE_FIR_COMP) begin
+    if(USE_FIR_COMP) begin: gen_fir
         fir_compensator #(
             .WIDTH(ADC_BITLEN),
             .ALPHA_8(FIR_COMP_ALPHA_8)
@@ -120,7 +120,8 @@ module sigma_delta_adc #(
     bit [ADC_BITLEN-1:0] post_dc_blocked;
 
     //DC Removal / Assign Output
-    if(SIGNED_OUTPUT) begin
+    generate
+    if(SIGNED_OUTPUT) begin: gen_signed
         dc_blocker #(
             .WIDTH(ADC_BITLEN),
             .DC_BLOCK_SHIFT(DC_BLOCK_SHIFT)
@@ -132,6 +133,7 @@ module sigma_delta_adc #(
             .data_out(dc_blocked)
         ); 
     end
+    endgenerate
 
     //generic to switch between dc blocked and normal path
     always_comb begin

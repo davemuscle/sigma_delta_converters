@@ -1,7 +1,7 @@
 ########################################################
 # Quartus Build Source Files
 # RTL
-sv_list   = ../rtl/sigma_delta_adc.sv ../rtl/top.sv ../../sv_reuse/uart/uart.sv
+sv_list   = $(wildcard ../rtl/*.sv) $(wildcard ../rtl/hw_test/*.sv)
 v_list    = 
 vhd_list  = 
 top  = top

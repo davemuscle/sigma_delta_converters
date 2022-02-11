@@ -14,7 +14,7 @@ from Signal import *
 ADC_OVERSAMPLE_RATE = 1024
 ADC_CIC_STAGES      = 2
 ADC_BITLEN          = 24
-ADC_SIGNED_OUTPUT   = True
+ADC_SIGNED_OUTPUT   = False
 
 # constants for FPGA build
 FPGA_NUM_SAMPLES = 1024
