@@ -6,11 +6,14 @@
 
 module sigma_delta_adc_tb #(
     //dut params
-    parameter int OVERSAMPLE_RATE = 256,
-    parameter int CIC_STAGES      = 2,
-    parameter int ADC_BITLEN      = 24,
-    parameter int SIGNED_OUTPUT   = 1,
-    parameter int DC_BLOCK_SHIFT  = 10,
+    parameter int OVERSAMPLE_RATE    = 256,
+    parameter int CIC_STAGES         = 2,
+    parameter int ADC_BITLEN         = 24,
+    parameter bit USE_FIR_COMP       = 1,
+    parameter int FIR_COMP_ALPHA_8   = 2,
+    parameter int SIGNED_OUTPUT      = 1,
+    parameter int DC_BLOCK_SHIFT     = 10,
+    parameter int GLITCHLESS_STARTUP = 10,
     //tb params
     parameter int    DUMP_VCD    = 0,
     parameter int    BCLK        = 12880000,
@@ -32,22 +35,6 @@ module sigma_delta_adc_tb #(
         end
         wait(sim_done == 1);
         $finish;
-    end
-   
-    // print parameters
-    initial begin
-        $display("* Param: OVERSAMPLE_RATE=%-d", OVERSAMPLE_RATE);
-        $display("* Param: CIC_STAGES=%-d", CIC_STAGES);
-        $display("* Param: ADC_BITLEN=%-d", ADC_BITLEN);
-        $display("* Param: DC_BLOCK_SHIFT=%-d", DC_BLOCK_SHIFT);
-        $display("* Param: SIGNED_OUTPUT=%-d", SIGNED_OUTPUT);
-        $display("* Param: VCC=%f", VCC);
-        $display("* Param: FREQUENCY=%f", FREQUENCY);
-        $display("* Param: AMPLITUDE=%f", AMPLITUDE);
-        $display("* Param: OFFSET=%f", OFFSET);
-        $display("* Param: BCLK=%-d", BCLK);
-        $display("* Param: INPUT_FILE=%s", INPUT_FILE);
-        $display("* Param: OUTPUT_FILE=%s", OUTPUT_FILE);
     end
 
     // clock generator 
@@ -131,8 +118,11 @@ module sigma_delta_adc_tb #(
         .OVERSAMPLE_RATE(OVERSAMPLE_RATE),
         .CIC_STAGES(CIC_STAGES),
         .ADC_BITLEN(ADC_BITLEN),
+        .USE_FIR_COMP(USE_FIR_COMP),
+        .FIR_COMP_ALPHA_8(FIR_COMP_ALPHA_8),
         .SIGNED_OUTPUT(SIGNED_OUTPUT),
-        .DC_BLOCK_SHIFT(DC_BLOCK_SHIFT)
+        .DC_BLOCK_SHIFT(DC_BLOCK_SHIFT),
+        .GLITCHLESS_STARTUP(GLITCHLESS_STARTUP)
     ) dut (
         .clk(clk),
         .rst(rst),
@@ -161,6 +151,11 @@ module sigma_delta_adc_tb #(
                 end
                 for(i = 0; i < CIC_STAGES; i = i + 1) begin
                     adc_output_voltage = adc_output_voltage / real'(OVERSAMPLE_RATE);
+                end
+                //hack, unsigned filtered output shoots up within the first
+                //four samples
+                if(adc_output_voltage > VCC) begin
+                    adc_output_voltage = VCC;
                 end
                 if(enable_output) begin
                     samples_out = samples_out + 1;
