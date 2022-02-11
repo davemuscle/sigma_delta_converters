@@ -29,7 +29,7 @@ waveform_amplitude   = 1.0
 waveform_sweep_start = 220.0
 waveform_sweep_end   = 60000.0
 waveform_sweep_steps = 40
-waveform_dft_size    = 2048
+waveform_dft_size    = 1024
 
 # Read lines from FPGA serial port, can lock up easily
 def read_serial():
@@ -189,7 +189,7 @@ def Test_Measure():
         rms[i] = get_rms(voltage[i])
         dft[i] = get_dft_mags(get_dft(voltage[i], samplerate, waveform_dft_size), samplerate, waveform_dft_size)
         dft_mags_log10[i] = [20*np.log10(i/waveform_amplitude) for i in dft[i][1]]
-        snr[i] = get_snr(dft[i][1], 4)
+        snr[i] = get_snr(dft[i][1], 0)
         thdn[i] = get_thdn(dft[i][1], freq, waveform_dft_size, samplerate)
 
         print('-'*20 + " " + titles[i] + " Results " + '-'*20)
