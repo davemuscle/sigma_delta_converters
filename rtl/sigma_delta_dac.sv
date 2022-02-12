@@ -31,6 +31,13 @@ module sigma_delta_dac #(
     //comb/integrator signals
     bit [DAC_BITLEN-1:0] cic_comb_data [CIC_STAGES:0] = '{default:0};
     bit [DAC_BITLEN-1:0] cic_inte_data [CIC_STAGES:0] = '{default:0};
+
+    //lazy upscaler
+    bit [DAC_BITLEN-1:0] lazy_interp_reg = 0;
+    bit [DAC_BITLEN-1:0] lazy_interp_dly = 0;
+    bit [DAC_BITLEN-1:0] lazy_interp_step = 0;
+    bit [DAC_BITLEN-1:0] lazy_out = 0;
+    localparam OSR_LOG2 = $clog2(OVERSAMPLE_RATE);
     
     always_ff @(posedge clk) begin
         //iptimator control
@@ -52,29 +59,35 @@ module sigma_delta_dac #(
         fir_in = ipt_ena ? dac_input : 0;
         fir_in = dac_input;
         //cic_comb_data[0] = ipt_ena ? dac_input : 0;
-        cic_comb_data[0] = fir_out;
+        cic_comb_data[0] = lazy_out;
         cic_inte_data[0] = cic_comb_data[CIC_STAGES];
     end
 
-    bit [DAC_BITLEN:0] accum = 0;
+    //lazy upscaler
     always_ff @(posedge clk) begin
-        accum <= accum[DAC_BITLEN-1:0] + cic_inte_data[CIC_STAGES];
+        bit [DAC_BITLEN-1:0] sub;
+        if(ipt_ena) begin
+            lazy_interp_reg <= dac_input;
+            lazy_interp_dly <= lazy_interp_reg;
+            lazy_out <= lazy_interp_dly;
+            lazy_interp_step <= signed'(lazy_interp_reg - lazy_interp_dly) >>> OSR_LOG2;
+        end
+        else begin
+            lazy_out <= lazy_out + lazy_interp_step;
+        end
     end
 
-    always_comb begin
-        dac_pin = accum[DAC_BITLEN];
-    end
 
-    fir_compensator #(
-        .WIDTH(DAC_BITLEN),
-        .ALPHA_8(FIR_COMP_ALPHA_8)
-    ) fir_comp_u0 (
-        .clk(clk),
-        .rst(rst),
-        .ena(1'b1),
-        .data_in (fir_in),
-        .data_out(fir_out)
-    );
+    //fir_compensator #(
+    //    .WIDTH(DAC_BITLEN),
+    //    .ALPHA_8(FIR_COMP_ALPHA_8)
+    //) fir_comp_u0 (
+    //    .clk(clk),
+    //    .rst(rst),
+    //    .ena(1'b1),
+    //    .data_in (fir_in),
+    //    .data_out(fir_out)
+    //);
 
     //place cic iptimator
     genvar i;
@@ -101,6 +114,14 @@ module sigma_delta_dac #(
         end
     endgenerate
 
+    bit [DAC_BITLEN:0] accum = 0;
+    always_ff @(posedge clk) begin
+        accum <= accum[DAC_BITLEN-1:0] + cic_inte_data[CIC_STAGES];
+    end
+
+    always_comb begin
+        dac_pin = accum[DAC_BITLEN];
+    end
 
     
 

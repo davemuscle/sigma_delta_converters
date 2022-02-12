@@ -52,7 +52,7 @@ module sigma_delta_dac_tb #(
     //generate sine wave
     localparam int NUM_SAMPLES = NUM_CYCLES * (BCLK / FREQUENCY);
     localparam int HALF_OFFSET = (2**DAC_BITLEN) >> 1;
-    localparam int HALF_SCALE = ((2**DAC_BITLEN-1) >> 1)-1;
+    localparam int HALF_SCALE = ((2**DAC_BITLEN) >> 1)-1;
     bit rst = 1;
     bit enable_output = 0;
 
@@ -70,6 +70,7 @@ module sigma_delta_dac_tb #(
             @(posedge clk);
             if(dac_ready) begin
                 dac_input = (HALF_SCALE*$cos(2.0*3.14*FREQUENCY*sample_in/(BCLK/OVERSAMPLE_RATE))) + HALF_OFFSET;
+                //dac_input &= ~(DAC_BITLEN'(OVERSAMPLE_RATE-1));
                 //dac_input = HALF_OFFSET;
                 sample_in = sample_in + 1;
                 $fdisplay(fd, "%f", dac_input);
@@ -98,6 +99,30 @@ module sigma_delta_dac_tb #(
     real this_avg = 0;
     real dac_output_voltage;
 
+    real pre_filt_voltage = 0;
+    localparam NUM_TAPS = 17;
+    real taps [NUM_TAPS-1:0] = {
+        0 : 0.053199539487214974,
+        1 : -0.012429269183857224,
+        2 : -0.0017914940680014788,
+        3 : 0.027385191736448055,
+        4 : -0.0617296106595956,
+        5 : 0.09936899294560461,
+        6 : -0.13344122754165255,
+        7 : 0.15720988325250332,
+        8 : 0.8342625143188802,
+        9 : 0.15720988325250332,
+        10: -0.13344122754165255,
+        11: 0.09936899294560461,
+        12: -0.0617296106595956,
+        13: 0.027385191736448055,
+        14: -0.0017914940680014788,
+        15: -0.012429269183857224,
+        16: 0.053199539487214974
+    };
+    real shifts [ NUM_TAPS-1:0] = '{default:0};
+    
+
     // file output for visual inspection
     initial begin: file_output
         int fd;
@@ -119,7 +144,13 @@ module sigma_delta_dac_tb #(
                 else begin
                     bit_cnt <= bit_cnt + 1;
                 end
-                dac_output_voltage = VCC*this_avg / real'(2*OVERSAMPLE_RATE);
+                for(i = 0; i < NUM_TAPS-1; i = i + 1) begin
+                    dac_output_voltage = dac_output_voltage + (taps[i]*shifts[i]);
+                end
+                shifts[0]= VCC*this_avg / real'(2*OVERSAMPLE_RATE);
+                for(i = 0; i < NUM_TAPS-1; i = i + 1) begin
+                    shifts[NUM_TAPS-1-i] = shifts[NUM_TAPS-2-i];
+                end
                 if(enable_output) begin
                     samples_out = samples_out + 1;
                     //write output into file

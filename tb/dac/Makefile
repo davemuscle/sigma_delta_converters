@@ -8,9 +8,9 @@ sim_tb = sigma_delta_dac_tb
 tb_input=tb_input.txt
 tb_output=tb_output.txt
 
-sim_params  = OVERSAMPLE_RATE=8
+sim_params  = OVERSAMPLE_RATE=64
 sim_params += CIC_STAGES=1
-sim_params += DAC_BITLEN=12
+sim_params += DAC_BITLEN=24
 sim_params += USE_FIR_COMP=1
 sim_params += FIR_COMP_ALPHA_8=2
 sim_params += DUMP_VCD=1
