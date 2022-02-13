@@ -51,8 +51,10 @@ module sigma_delta_dac_tb #(
 
     //generate sine wave
     localparam int NUM_SAMPLES = NUM_CYCLES * (BCLK / FREQUENCY);
-    localparam int HALF_OFFSET = (2**DAC_BITLEN) >> 1;
-    localparam int HALF_SCALE = ((2**DAC_BITLEN) >> 1)-1;
+    //localparam int SIG_BITLEN = DAC_BITLEN - $clog2(OVERSAMPLE_RATE);
+    localparam int SIG_BITLEN = DAC_BITLEN;
+    localparam int HALF_OFFSET = (2**SIG_BITLEN) >> 1;
+    localparam int HALF_SCALE = ((2**SIG_BITLEN) >> 1)-1;
     bit rst = 1;
     bit enable_output = 0;
 

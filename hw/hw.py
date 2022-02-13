@@ -34,9 +34,10 @@ class HwTest:
     waveform_sweep_end   = 60000.0
     waveform_sweep_steps = 40
     waveform_dft_size    = 1024
+    waveform_offset      = FPGA_VCC/2
     
     # Read lines from FPGA serial port, can lock up easily
-    def read_serial(self):
+    def read_serial(self, raw=False):
         ser = Serial(self.FPGA_UART, self.FPGA_BAUD)
         ser.write(b's')
         samples = []
@@ -50,6 +51,8 @@ class HwTest:
             samples.append(integer)
         ser.close()
         # convert digital to voltage
+        if(raw == True):
+            return samples
         voltages = []
         for sample in samples:
             v = sample * self.FPGA_VCC
@@ -126,7 +129,7 @@ class HwTest:
         samples = self.read_serial()
 
         self.waveform_amplitude = 1.0
-        freqs, mags = self.get_spectral_analysis(samples)
+        freqs, mags = self.get_spectral_analysis(samples, offset=self.waveform_offset)
         
         subplot(211)
         plot(samples)
@@ -149,9 +152,9 @@ class HwTest:
 
         dad = DigilentAnalogDiscovery() 
         dad.open_device()
-        dad.wavegen_config_sine_out(freq = self.waveform_frequency, amp = self.waveform_amplitude)
+        dad.wavegen_config_sine_out(freq = self.waveform_frequency, amp = self.waveform_amplitude, offset = self.waveform_offset)
         sleep(0.1)
-        samples = self.read_serial()
+        samples = self.read_serial(raw=True)
         dad.close_device()
         
         amplitude, dc, rms = self.get_signal_properties(samples)
@@ -207,7 +210,7 @@ class HwTest:
                 if(i == 2):
                     dad.custom_data[n] += noise_amp*randrange(-100,100,1)/100
 
-            dad.wavegen_config_custom_out(0, self.waveform_frequency, self.waveform_amplitude, 0)
+            dad.wavegen_config_custom_out(0, self.waveform_frequency, self.waveform_amplitude, self.waveform_offset)
             sleep(0.1)
             samples = self.read_serial()
 
@@ -266,7 +269,7 @@ class HwTest:
 
         # record samples for each freq and store amplitude
         for freq in freqs:
-            dad.wavegen_config_sine_out(freq = freq, amp = self.waveform_amplitude, offset=0)
+            dad.wavegen_config_sine_out(freq = freq, amp = self.waveform_amplitude, offset=self.waveform_offset)
             sleep(0.1)
             samples = self.read_serial()
             amplitude, dc, rms = self.get_signal_properties(samples)
@@ -291,7 +294,8 @@ class HwTest:
 parser = ArgumentParser(description = 'Hardware Test Script for ADC')
 parser.add_argument('--mode', metavar='mode',        nargs=1, help = 'mode = [read, sine, measure, bode]')
 parser.add_argument('--freq', metavar='frequency',   nargs=1, help = 'waveform frequency')
-parser.add_argument('--amp',  metavar='amplitude',   nargs=1, help = 'waveform amplitude')
+parser.add_argument('--amplitude',  metavar='amplitude',   nargs=1, help = 'waveform amplitude')
+parser.add_argument('--offset',  metavar='offset',   nargs=1, help = 'waveform offset')
 parser.add_argument('--start',metavar='sweep_start', nargs=1, help = 'waveform sweep start frequency')
 parser.add_argument('--end',  metavar='sweep_end',   nargs=1, help = 'waveform sweep end frequency')
 parser.add_argument('--steps',metavar='sweep_steps', nargs=1, help = 'waveform sweep steps')
@@ -303,8 +307,10 @@ hw = HwTest()
 # overrides to waveform parameters
 if(args.freq):
     hw.waveform_frequency = float(args.freq[0])
-if(args.amp):
-    hw.waveform_amplitude = float(args.amp[0])
+if(args.amplitude):
+    hw.waveform_amplitude = float(args.amplitude[0])
+if(args.offset):
+    hw.waveform_offset = float(args.offset[0])
 if(args.start):
     hw.waveform_sweep_start = float(args.start[0])
 if(args.end):

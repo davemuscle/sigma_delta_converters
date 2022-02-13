@@ -54,20 +54,23 @@ module sigma_delta_dac #(
         end
     end
 
+    bit [DAC_BITLEN-1:0] pre_out;
+
     always_comb begin
         dac_ready = ipt_ena;
         fir_in = ipt_ena ? dac_input : 0;
         fir_in = dac_input;
         //cic_comb_data[0] = ipt_ena ? dac_input : 0;
-        cic_comb_data[0] = lazy_out;
+        cic_comb_data[0] = fir_in;
         cic_inte_data[0] = cic_comb_data[CIC_STAGES];
+        pre_out = cic_inte_data[CIC_STAGES];
     end
 
     //lazy upscaler
     always_ff @(posedge clk) begin
         bit [DAC_BITLEN-1:0] sub;
         if(ipt_ena) begin
-            lazy_interp_reg <= dac_input;
+            lazy_interp_reg <= dac_input << OSR_LOG2;
             lazy_interp_dly <= lazy_interp_reg;
             lazy_out <= lazy_interp_dly;
             lazy_interp_step <= signed'(lazy_interp_reg - lazy_interp_dly) >>> OSR_LOG2;
@@ -78,16 +81,16 @@ module sigma_delta_dac #(
     end
 
 
-    //fir_compensator #(
-    //    .WIDTH(DAC_BITLEN),
-    //    .ALPHA_8(FIR_COMP_ALPHA_8)
-    //) fir_comp_u0 (
-    //    .clk(clk),
-    //    .rst(rst),
-    //    .ena(1'b1),
-    //    .data_in (fir_in),
-    //    .data_out(fir_out)
-    //);
+    fir_compensator #(
+        .WIDTH(DAC_BITLEN),
+        .ALPHA_8(FIR_COMP_ALPHA_8)
+    ) fir_comp_u0 (
+        .clk(clk),
+        .rst(rst),
+        .ena(1'b1),
+        .data_in (lazy_out),
+        .data_out(fir_out)
+    );
 
     //place cic iptimator
     genvar i;
@@ -116,7 +119,7 @@ module sigma_delta_dac #(
 
     bit [DAC_BITLEN:0] accum = 0;
     always_ff @(posedge clk) begin
-        accum <= accum[DAC_BITLEN-1:0] + cic_inte_data[CIC_STAGES];
+        accum <= accum[DAC_BITLEN-1:0] + pre_out;
     end
 
     always_comb begin

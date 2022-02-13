@@ -4,6 +4,7 @@ module top
     input bit pin,
     output bit vref,
     output bit fb,
+    output bit dac_pin,
     output bit [7:0] led,
     output bit tx,
     input bit rx
@@ -17,18 +18,37 @@ module top
         .OVERSAMPLE_RATE(1024),
         .CIC_STAGES(2),
         .ADC_BITLEN(24),
-        .USE_FIR_COMP(1),
+        .USE_FIR_COMP(0),
         .FIR_COMP_ALPHA_8(2),
         .SIGNED_OUTPUT(0),
         .DC_BLOCK_SHIFT(10),
         .GLITCHLESS_STARTUP(50)
-    ) dut (
+    ) dut_adc (
         .clk(clk),
         .rst(1'b0),
         .adc_lvds_pin(pin),
         .adc_fb_pin(fb),
         .adc_output(adc_output),
         .adc_valid(adc_valid)
+    );
+
+    bit [23:0] dac_input = 0;
+
+    always_ff @(posedge clk) begin
+        dac_input <= dac_input + 1;
+    end
+
+
+    sigma_delta_dac #(
+        .OVERSAMPLE_RATE(2),
+        .CIC_STAGES(2),
+        .DAC_BITLEN(24)
+    ) dut_dac (
+        .clk(clk),
+        .rst(1'b0),
+        .dac_input(dac_input),
+        .dac_ready(),
+        .dac_pin(dac_pin)
     );
 
     always_comb begin
