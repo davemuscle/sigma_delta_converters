@@ -7,10 +7,7 @@ module sigma_delta_adc #(
     parameter int CIC_STAGES = 2,
     parameter int ADC_BITLEN = 16,
     parameter bit USE_FIR_COMP = 1,
-    parameter int FIR_COMP_ALPHA_8 = 2,
-    parameter bit SIGNED_OUTPUT = 1,
-    parameter int DC_BLOCK_SHIFT = 7,
-    parameter int GLITCHLESS_STARTUP = 10
+    parameter int FIR_COMP_ALPHA_8 = 2
 )(
     input bit clk,
     input bit rst, //reset for optional power saving
@@ -22,6 +19,9 @@ module sigma_delta_adc #(
     output bit adc_valid              //signals valid output
 
 );
+    
+    //add an extra bit to pad a sign bit for underflows
+    localparam int CIC_BITLEN = 1 + 1 + int'((CIC_STAGES * $clog2(OVERSAMPLE_RATE)));
 
     bit adc_in;
 
@@ -32,8 +32,8 @@ module sigma_delta_adc #(
     bit dec_ena = 0;
 
     //comb/integrator signals
-    bit [ADC_BITLEN-1:0] cic_inte_data [CIC_STAGES:0] = '{default:0};
-    bit [ADC_BITLEN-1:0] cic_comb_data [CIC_STAGES:0] = '{default:0};
+    bit [CIC_BITLEN-1:0] cic_inte_data [CIC_STAGES:0] = '{default:0};
+    bit [CIC_BITLEN-1:0] cic_comb_data [CIC_STAGES:0] = '{default:0};
     
     //sample analog input connected to lvds positive
     always_ff @(posedge clk) begin
@@ -58,7 +58,7 @@ module sigma_delta_adc #(
 
     //assign first values to array
     always_comb begin
-        cic_inte_data[0] = ADC_BITLEN'(adc_in);
+        cic_inte_data[0] = CIC_BITLEN'(adc_in);
         cic_comb_data[0] = cic_inte_data[CIC_STAGES];
     end
 
@@ -67,7 +67,7 @@ module sigma_delta_adc #(
     generate
         for(i = 0; i < CIC_STAGES; i = i + 1) begin: gen_cic
             cic_integrator #(
-                .WIDTH(ADC_BITLEN)
+                .WIDTH(CIC_BITLEN)
             ) cic_inst_u0 (
                 .clk(clk), 
                 .rst(rst),
@@ -76,7 +76,7 @@ module sigma_delta_adc #(
                 .data_out(cic_inte_data[i+1])
             );
             cic_comb #(
-                .WIDTH(ADC_BITLEN)
+                .WIDTH(CIC_BITLEN)
             ) cic_inst_u1 (
                 .clk(clk),
                 .rst(rst),
@@ -87,14 +87,14 @@ module sigma_delta_adc #(
         end
     endgenerate
 
-    bit [ADC_BITLEN-1:0] fir_data;
-    bit [ADC_BITLEN-1:0] post_fir_data;
+    bit [CIC_BITLEN-1:0] fir_data;
+    bit [CIC_BITLEN-1:0] post_fir_data;
 
     //place optional fir compensator
     generate
     if(USE_FIR_COMP) begin: gen_fir
         fir_compensator #(
-            .WIDTH(ADC_BITLEN),
+            .WIDTH(CIC_BITLEN),
             .ALPHA_8(FIR_COMP_ALPHA_8)
         ) fir_comp_u0 (
             .clk(clk),
@@ -106,7 +106,7 @@ module sigma_delta_adc #(
     end
     endgenerate
     
-    //generic to switch between fir and normal path
+    //switch between fir and cic path
     always_comb begin
         if(USE_FIR_COMP) begin
             post_fir_data = fir_data;
@@ -116,63 +116,25 @@ module sigma_delta_adc #(
         end
     end
 
-    bit [ADC_BITLEN-1:0] dc_blocked;
-    bit [ADC_BITLEN-1:0] post_dc_blocked;
-
-    //DC Removal / Assign Output
-    generate
-    if(SIGNED_OUTPUT) begin: gen_signed
-        dc_blocker #(
-            .WIDTH(ADC_BITLEN),
-            .DC_BLOCK_SHIFT(DC_BLOCK_SHIFT)
-        ) dc_blocker_u0 (
-            .clk(clk),
-            .rst(rst),
-            .ena(dec_ena),
-            .data_in (post_fir_data),
-            .data_out(dc_blocked)
-        ); 
-    end
-    endgenerate
-
-    //generic to switch between dc blocked and normal path
-    always_comb begin
-        if(SIGNED_OUTPUT) begin
-            post_dc_blocked = dc_blocked;
-        end
-        else begin
-            post_dc_blocked = post_fir_data;
-        end
-    end
-
-    localparam CNT_GLT_STALEN = $clog2(GLITCHLESS_STARTUP);
-    const bit [CNT_GLT_STALEN-1:0] glt_cmp = CNT_GLT_STALEN'(GLITCHLESS_STARTUP-1);
-    bit [CNT_GLT_STALEN-1:0] glt_cnt = 0;
-
-    //Provide option for glitchless output
+    //assign output, do saturation if too high or low
+    //tested in sim with a sine input twice the fullscale voltage
     always_ff @(posedge clk) begin
-        if(GLITCHLESS_STARTUP == 0) begin
-            adc_valid <= dec_ena;
+        localparam cmp =  (2**ADC_BITLEN)-1;
+        adc_valid <= dec_ena;
+        //clip underflow
+        if(post_fir_data[CIC_BITLEN-1]) begin
+            adc_output <= 0;
         end
+        //clip overflow
+        else if(post_fir_data > CIC_BITLEN'(cmp)) begin
+            adc_output <= ADC_BITLEN'(cmp);
+        end
+        //just assign normally
         else begin
-            //assign output only when glitch count is saturated
-            if(glt_cnt == glt_cmp) begin
-                adc_valid <= dec_ena;
-            end
-            else begin
-                adc_valid <= 0;
-            end
-            //update count
-            if(dec_ena == 1 && glt_cnt < glt_cmp) begin
-                glt_cnt <= glt_cnt + 1;
-            end
+            adc_output <= ADC_BITLEN'(post_fir_data);
         end
-        //reset
-        if(rst) begin
-            glt_cnt <= 0;
-        end
-        //update output
-        adc_output <= post_dc_blocked;
     end
+
+
 
 endmodule: sigma_delta_adc

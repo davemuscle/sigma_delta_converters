@@ -16,8 +16,7 @@ class HwTest:
     # constants for ADC inst
     ADC_OVERSAMPLE_RATE = 1024
     ADC_CIC_STAGES      = 2
-    ADC_BITLEN          = 24
-    ADC_SIGNED_OUTPUT   = False
+    ADC_BITLEN          = 20
     
     # constants for FPGA build
     FPGA_NUM_SAMPLES = 4096
@@ -46,8 +45,6 @@ class HwTest:
             decoded_stripped = line.decode('utf-8')
             decoded_stripped = decoded_stripped.strip()
             integer = int(line, 16)
-            if(self.ADC_SIGNED_OUTPUT == True and (integer & (1 << self.ADC_BITLEN-1))):
-                integer -= (1 << self.ADC_BITLEN)
             samples.append(integer)
         ser.close()
         # convert digital to voltage
@@ -126,17 +123,19 @@ class HwTest:
     # display whatever is on the pin
     def test_read(self):
 
-        samples = self.read_serial()
+        fullscale = (2**(self.ADC_BITLEN))-1
+        samples = self.read_serial(raw=True)
+        voltages = [x*self.FPGA_VCC/fullscale for x in samples]
 
         self.waveform_amplitude = 1.0
-        freqs, mags = self.get_spectral_analysis(samples, offset=self.waveform_offset)
+        freqs, mags = self.get_spectral_analysis(voltages)
         
         subplot(211)
         plot(samples)
         grid()
         title("Hardware Data")
         xlabel('Samples')
-        ylabel('Voltage(V)')
+        ylabel('Digital Value')
         subplot(212)
         plot(freqs, mags)
         xscale('log')
@@ -150,6 +149,8 @@ class HwTest:
     # send in a signal, record it, and print/plot the result and FFT
     def test_sine(self):
 
+        fullscale = (2**(self.ADC_BITLEN))-1
+        
         dad = DigilentAnalogDiscovery() 
         dad.open_device()
         dad.wavegen_config_sine_out(freq = self.waveform_frequency, amp = self.waveform_amplitude, offset = self.waveform_offset)
@@ -157,16 +158,22 @@ class HwTest:
         samples = self.read_serial(raw=True)
         dad.close_device()
         
+        voltages = [x*self.FPGA_VCC / fullscale for x in samples]
         amplitude, dc, rms = self.get_signal_properties(samples)
-        freqs, mags = self.get_spectral_analysis(samples)
+        amplitude_v, dc_v, rms_v = self.get_signal_properties(voltages)
+        freqs, mags = self.get_spectral_analysis(voltages)
+        max_s = max(samples)
+        min_s = min(samples)
+        max_s_v = max_s * self.FPGA_VCC / fullscale
+        min_s_v = min_s * self.FPGA_VCC / fullscale
 
         print('-'*20 + " Test Result " + '-'*20)
-        print("* Freq: " + str(self.waveform_frequency))
-        print("*  Amp: " + str(amplitude))
-        print("*   DC: " + str(dc))
-        print("*  RMS: " + str(rms))
-        print("*  Max: " + str(max(samples)))
-        print("*  Min: " + str(min(samples)))
+        print("* Freq: %0.3f" % (self.waveform_frequency))
+        print("*  Amp: %8d = %.3f V" % (amplitude, amplitude_v))
+        print("*   DC: %8d = %.3f V" % (dc, dc_v))
+        print("*  RMS: %8d = %.3f V" % (rms, rms_v))
+        print("*  Max: %8d = %.3f V" % (max_s, max_s_v))
+        print("*  Min: %8d = %.3f V" % (min_s, min_s_v))
         
         subplot(211)
         plot(samples)
@@ -216,9 +223,6 @@ class HwTest:
 
             
             amplitude, dc, rms = self.get_signal_properties(samples)
-
-            if(self.ADC_SIGNED_OUTPUT == False):
-                samples = [x-dc for x in samples]
 
             freqs, mags = self.get_spectral_analysis(samples, log=False)
             snr, thdn = self.get_signal_qualities(mags)

@@ -17,12 +17,9 @@ module top
     sigma_delta_adc #(
         .OVERSAMPLE_RATE(1024),
         .CIC_STAGES(2),
-        .ADC_BITLEN(24),
+        .ADC_BITLEN(20),
         .USE_FIR_COMP(0),
-        .FIR_COMP_ALPHA_8(2),
-        .SIGNED_OUTPUT(0),
-        .DC_BLOCK_SHIFT(10),
-        .GLITCHLESS_STARTUP(50)
+        .FIR_COMP_ALPHA_8(2)
     ) dut_adc (
         .clk(clk),
         .rst(1'b0),
@@ -42,7 +39,7 @@ module top
     sigma_delta_dac #(
         .OVERSAMPLE_RATE(2),
         .CIC_STAGES(2),
-        .DAC_BITLEN(24)
+        .DAC_BITLEN(20)
     ) dut_dac (
         .clk(clk),
         .rst(1'b0),

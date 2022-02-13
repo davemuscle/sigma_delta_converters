@@ -10,12 +10,9 @@ tb_output=tb_output.txt
 
 sim_params  = OVERSAMPLE_RATE=256
 sim_params += CIC_STAGES=2
-sim_params += ADC_BITLEN=24
-sim_params += USE_FIR_COMP=1
+sim_params += ADC_BITLEN=16
+sim_params += USE_FIR_COMP=0
 sim_params += FIR_COMP_ALPHA_8=2
-sim_params += SIGNED_OUTPUT=0
-sim_params += DC_BLOCK_SHIFT=10
-sim_params += GLITCHLESS_STARTUP=10
 sim_params += DUMP_VCD=1
 sim_params += BCLK=12288000
 sim_params += NUM_CYCLES=4

@@ -11,9 +11,6 @@ module sigma_delta_adc_tb #(
     parameter int ADC_BITLEN         = 24,
     parameter bit USE_FIR_COMP       = 1,
     parameter int FIR_COMP_ALPHA_8   = 2,
-    parameter int SIGNED_OUTPUT      = 1,
-    parameter int DC_BLOCK_SHIFT     = 10,
-    parameter int GLITCHLESS_STARTUP = 10,
     //tb params
     parameter int    DUMP_VCD    = 0,
     parameter int    BCLK        = 12880000,
@@ -38,7 +35,6 @@ module sigma_delta_adc_tb #(
     end
 
     // clock generator 
-    localparam SCLK = BCLK/OVERSAMPLE_RATE;
     localparam CLK_NS = 10**9 / (BCLK * 2);
     bit clk;
     initial begin
@@ -48,28 +44,27 @@ module sigma_delta_adc_tb #(
         end
     end
 
-    //generate sine wave
-    localparam int DC_WAIT_CLOCKS = CIC_STAGES*OVERSAMPLE_RATE;
     localparam int NUM_SAMPLES = NUM_CYCLES * (BCLK / FREQUENCY);
     real adc_input;
     bit rst = 1;
-    bit enable_output = 0;
 
+    //generate input stimulus
     initial begin
         int fd;
         int sample_in;
         sample_in = 0;
-        //reset and dc startup
+        //proc reset
         repeat(5) @(posedge clk);
         rst <= 0;
-        repeat(DC_WAIT_CLOCKS) @(posedge clk);
-        enable_output <= 1;
+        repeat(5) @(posedge clk);
         fd = $fopen(INPUT_FILE, "w");
-        //generate
         while(sample_in < NUM_SAMPLES) begin
+            //generate wave
             adc_input = AMPLITUDE*$cos(2.0*3.14*FREQUENCY*sample_in/BCLK) + OFFSET;
             sample_in = sample_in + 1;
+            //write to file
             $fdisplay(fd, "%f", adc_input);
+            //wait for clock
             @(posedge clk);
         end
         $fclose(fd);
@@ -83,9 +78,13 @@ module sigma_delta_adc_tb #(
     bit adc_lvds_pin, adc_fb_pin;
 
     always_comb begin
-        //charge on capacitor is proportional to voltage stored
-        //taken from Lattice example
-        //CAP_FUDGE chosen empirically, in HW this matches the capacitance
+        //charge on capacitor is proportional to voltage stored, from Lattice
+  
+        //CAP_FUDGE chosen empirically, in HW this corresponds to the capacitance
+
+        //I think you just pick a decently large value for good results here
+
+        //In hardware I used 1 nF with 10Kohm resistor
         increase = (VCC - lvds_pin_n) / CAP_FUDGE;
         decrease = (lvds_pin_n) / CAP_FUDGE;
     end
@@ -119,10 +118,7 @@ module sigma_delta_adc_tb #(
         .CIC_STAGES(CIC_STAGES),
         .ADC_BITLEN(ADC_BITLEN),
         .USE_FIR_COMP(USE_FIR_COMP),
-        .FIR_COMP_ALPHA_8(FIR_COMP_ALPHA_8),
-        .SIGNED_OUTPUT(SIGNED_OUTPUT),
-        .DC_BLOCK_SHIFT(DC_BLOCK_SHIFT),
-        .GLITCHLESS_STARTUP(GLITCHLESS_STARTUP)
+        .FIR_COMP_ALPHA_8(FIR_COMP_ALPHA_8)
     ) dut (
         .clk(clk),
         .rst(rst),
@@ -132,9 +128,7 @@ module sigma_delta_adc_tb #(
         .adc_valid(adc_valid)
     );
 
-    // file output for visual inspection
-    localparam VOLTAGE_OUT = 0;
-
+    //write output
     initial begin: file_output
         int fd;
         int i;
@@ -144,31 +138,22 @@ module sigma_delta_adc_tb #(
         wait(rst == 0);
         fd = $fopen(OUTPUT_FILE, "w");
         while(sim_done == 0) begin
+            //wait for valid signal
             @(posedge adc_valid) begin
-                if(SIGNED_OUTPUT) begin
-                    adc_output_voltage = real'(signed'(adc_output));
+                //convert to float for file io reuse
+                adc_output_voltage = real'(adc_output);
+                //convert to voltage
+                adc_output_voltage *= VCC;
+                //scale by the number of ADC bits, corresponds to:
+                //CIC_STAGES*OVERSAMPLE_RATE
+                for(i = 0; i < CIC_STAGES; i = i + 1) begin
+                    adc_output_voltage = adc_output_voltage / real'(OVERSAMPLE_RATE);
                 end
-                else begin
-                    adc_output_voltage = real'(unsigned'(adc_output));
-                end
-                if(VOLTAGE_OUT) begin
-                    adc_output_voltage *= VCC;
-                    for(i = 0; i < CIC_STAGES; i = i + 1) begin
-                        adc_output_voltage = adc_output_voltage / real'(OVERSAMPLE_RATE);
-                    end
-                    //hack, unsigned filtered output shoots up within the first
-                    //four samples
-                    if(adc_output_voltage > VCC) begin
-                        adc_output_voltage = VCC;
-                    end
-                end
-                if(enable_output) begin
-                    samples_out = samples_out + 1;
-                    //write output into file
-                    $fdisplay(fd, "%f", adc_output_voltage);
-                    if(samples_out == int'(NUM_SAMPLES/OVERSAMPLE_RATE)) begin
-                        sim_done = 1;
-                    end
+                samples_out = samples_out + 1;
+                //write output into file
+                $fdisplay(fd, "%f", adc_output_voltage);
+                if(samples_out == int'(NUM_SAMPLES/OVERSAMPLE_RATE)) begin
+                    sim_done = 1;
                 end
             end
         end
