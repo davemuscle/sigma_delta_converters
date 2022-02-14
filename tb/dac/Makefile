@@ -1,6 +1,4 @@
-##############################################################
-# Generic Sim Using Modelsim
-# from the command line, eg: make sim sim_list=xyz
+include ../Makefile
 
 sim_list = ../../rtl/*.sv ./sigma_delta_dac_tb.sv
 sim_tb = sigma_delta_dac_tb
@@ -18,24 +16,3 @@ sim_params += AMPLITUDE=1.0
 sim_params += OFFSET=1.67
 sim_params += INPUT_FILE="$(tb_input)"
 sim_params += OUTPUT_FILE="$(tb_output)"
-
-.PHONY: sim
-sim:
-	vlog $(sim_list)
-	vsim -c $(addprefix -g, $(sim_params)) -do "run -all" $(sim_tb)
-
-.PHONY: plot
-plot:
-	../plot.py $(tb_input) $(tb_output)
-
-.PHONY: gui
-gui:
-	gtkwave -og dump.vcd &
-
-.PHONY: clean
-clean:
-	rm -rf work
-	rm -rf *.vcd *.fst
-	rm -rf transcript
-	rm -rf $(tb_input) $(tb_output)
-##############################################################
