@@ -17,11 +17,16 @@ set_location_assignment PIN_C5 -to led[7]
 set_instance_assignment -name IO_STANDARD "1.2 V" -to led[*]
 set_location_assignment PIN_M8 -to clk
 
+#set_location_assignment PIN_V13 -to dac_pin
 set_location_assignment PIN_AA20 -to dac_pin
+#set_instance_assignment -name CURRENT_STRENGTH_NEW 16MA -to dac_pin
+#set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to dac_pin
+#set_instance_assignment -name SLEW_RATE 0 -to dac_pin
+
+set_location_assignment PIN_J21 -to key
 
 set_location_assignment PIN_Y18 -to fb
+#set_instance_assignment -name CURRENT_STRENGTH_NEW 16MA -to fb
 
 set_location_assignment PIN_U15 -to tx
 set_location_assignment PIN_R13 -to rx
-
-set_location_assignment PIN_AA17 -to vref

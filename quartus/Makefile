@@ -11,48 +11,59 @@ tcl_list = adc_pins.qsf
 qsys_list =
 # SDC
 sdc_list = adc_timing.sdc
-
 ########################################################
 # Project Details
-family  = "MAX 10"
-device  = 10M50DAF484C6GES
-prj     = sigma_delta_adc
-prj_dir = prj
-pathfix = ../
-
+family    = "MAX 10"
+device    = 10M50DAF484C6GES
+prj       = sigma_delta_adc
+prj_dir   = prj
+pathfix   = ../
+src_list  = $(sv_list) $(v_list) $(vhd_list) 
+src_list += $(tcl_list) $(qsys_list) $(sdc_list)
 ########################################################
 # Build Recipes
+.DEFAULT_GOAL := build
+
+.PHONY: project
+project: $(prj_dir)/$(prj).qpf
+$(prj_dir)/$(prj).qpf: $(src_list)
+	mkdir -p $(prj_dir)
+	echo "$$tcl_script" > $(prj_dir)/project.tcl
+	cd $(prj_dir); quartus_sh -t project.tcl
+
+.PHONY: gui
+gui:
+	[ -f $(prj_dir)/$(prj).qpf ] && quartus $(prj_dir)/$(prj).qpf &
 
 .PHONY: build
-build:
-	mkdir -p $(prj_dir)
-	echo "$$tcl_script" > $(prj_dir)/$@.tcl
+build: $(prj_dir)/$(prj).sof
+$(prj_dir)/$(prj).sof: $(src_list) $(prj_dir)/$(prj).qpf
+	[ -f $(prj_dir)/$(prj).qpf ] || $(MAKE) $(prj_dir)/$(prj).qpf
 	cd $(prj_dir) && \
-	quartus_sh -t $@.tcl && \
 	quartus_map $(prj) && \
 	quartus_fit $(prj) && \
 	quartus_asm $(prj) && \
 	quartus_sta $(prj)
-	$(MAKE) summary
+	$(MAKE) summary | tee $(prj_dir)/summary.text
 
 .PHONY: summary
 summary:
 	@echo ""
-	@echo "*** Build Summary ***"
-	@grep "logic elements" $(prj_dir)/$(prj).fit.summary
-	@grep "combinational functions" $(prj_dir)/$(prj).fit.summary
-	@grep "logic registers" $(prj_dir)/$(prj).fit.summary
-	@grep "memory bits" $(prj_dir)/$(prj).fit.summary
-	@grep "Multiplier" $(prj_dir)/$(prj).fit.summary
-	@grep "PLL" $(prj_dir)/$(prj).fit.summary
-	@grep "Total pins" $(prj_dir)/$(prj).fit.summary
+	@echo "*** Build Summary ***"                                 
+	@grep "logic elements"          $(prj_dir)/$(prj).fit.summary          
+	@grep "combinational functions" $(prj_dir)/$(prj).fit.summary 
+	@grep "logic registers"         $(prj_dir)/$(prj).fit.summary         
+	@grep "memory bits"             $(prj_dir)/$(prj).fit.summary             
+	@grep "Multiplier"              $(prj_dir)/$(prj).fit.summary			  
+	@grep "PLL"                     $(prj_dir)/$(prj).fit.summary					  
+	@grep "Total pins"              $(prj_dir)/$(prj).fit.summary			  
 	@echo ""
 	@echo "*** Build Complete ***"
 	@echo "Instances Failing Timing: `grep -c "TNS.*:.*-" $(prj_dir)/$(prj).sta.summary`"
 	@echo ""
 
 .PHONY: prog
-prog:
+prog: $(prj_dir)/$(prj).sof
 	quartus_pgm -m jtag -o "p;$(prj_dir)/$(prj).sof"
 
 .PHONY: clean

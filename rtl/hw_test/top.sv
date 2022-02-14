@@ -1,8 +1,8 @@
 module top
 (
     input bit clk,
+    input bit key,
     input bit pin,
-    output bit vref,
     output bit fb,
     output bit dac_pin,
     output bit [7:0] led,
@@ -34,24 +34,20 @@ module top
     always_ff @(posedge clk) begin
         dac_input <= dac_input + 1;
     end
-
-
+//mmamam
     sigma_delta_dac #(
-        .OVERSAMPLE_RATE(2),
-        .CIC_STAGES(2),
         .DAC_BITLEN(20)
     ) dut_dac (
         .clk(clk),
-        .rst(1'b0),
-        .dac_input(dac_input),
-        .dac_ready(),
+        .rst(key),
+        .dac_input(adc_output),
+        .dac_valid(adc_valid),
         .dac_pin(dac_pin)
     );
 
     always_comb begin
         led = ~(adc_output[19:12]);
         led = 8'hFF; //todo undo lights off
-        vref = 1;
     end
 
     //uart signals
