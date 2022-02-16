@@ -53,7 +53,7 @@ module sigma_delta_dac_tb #(
     localparam int HALF_SCALE = ((2**SIG_BITLEN) >> 1)-1;
     bit rst = 1;
     bit enable_output = 0;
-
+    bit dac_valid = 0;
     initial begin
         int fd;
         int sample_in;
@@ -65,12 +65,13 @@ module sigma_delta_dac_tb #(
         fd = $fopen(INPUT_FILE, "w");
         //generate
         while(sample_in < NUM_SAMPLES) begin
-            repeat(HOLD_RATE) @(posedge clk);
-            dac_input = (HALF_SCALE*$cos(2.0*3.14*FREQUENCY*sample_in/(BCLK/HOLD_RATE))) + HALF_OFFSET;
-            //dac_input &= ~(DAC_BITLEN'(OVERSAMPLE_RATE-1));
-            //dac_input = HALF_OFFSET;
+            dac_valid <= 0;
+            repeat(HOLD_RATE-1) @(posedge clk);
+            dac_input <= (HALF_SCALE*$cos(2.0*3.14*FREQUENCY*sample_in/(BCLK/HOLD_RATE))) + HALF_OFFSET;
+            dac_valid <= 1;
             sample_in = sample_in + 1;
             $fdisplay(fd, "%f", dac_input);
+            @(posedge clk);
         end
         $fclose(fd);
     end
@@ -82,7 +83,7 @@ module sigma_delta_dac_tb #(
         .clk(clk),
         .rst(rst),
         .dac_input(dac_input),
-        .dac_valid(1'b1),
+        .dac_valid(dac_valid),
         .dac_pin(dac_pin)
     );
 

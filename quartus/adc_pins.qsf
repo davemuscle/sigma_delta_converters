@@ -23,7 +23,8 @@ set_location_assignment PIN_AA20 -to dac_pin
 #set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to dac_pin
 #set_instance_assignment -name SLEW_RATE 0 -to dac_pin
 
-set_location_assignment PIN_J21 -to key
+set_location_assignment PIN_J21 -to sw[0]
+set_location_assignment PIN_J22 -to sw[1]
 
 set_location_assignment PIN_Y18 -to fb
 #set_instance_assignment -name CURRENT_STRENGTH_NEW 16MA -to fb

@@ -6,7 +6,7 @@ module sigma_delta_adc #(
     parameter int OVERSAMPLE_RATE = 256,
     parameter int CIC_STAGES = 2,
     parameter int ADC_BITLEN = 16,
-    parameter bit USE_FIR_COMP = 1,
+    parameter bit USE_FIR_COMP = 0,
     parameter int FIR_COMP_ALPHA_8 = 2
 )(
     input bit clk,
