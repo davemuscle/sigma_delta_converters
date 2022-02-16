@@ -279,9 +279,50 @@ class HwTest:
         show()
         tight_layout()
 
+    def test_read(self):
+
+        dad = DigilentAnalogDiscovery()
+        dad.open_device()
+
+        samples = dad.scope_config_read_buffer(buffer=4096, samplerate=self.FPGA_SAMPLERATE, range=7.0);
+        dad.close_device()
+        
+        amplitude, dc, rms = self.get_signal_properties(samples)
+        freqs, mags = self.get_spectral_analysis(samples, log=False)
+        snr, thdn = self.get_signal_qualities(mags)
+        mags = [20*np.log10(i/amplitude) for i in mags]
+        max_s = max(samples)
+        min_s = min(samples)
+
+        print('-'*20 + " Test Result " + '-'*20)
+        print("*  Amp: %.3f V"  % (amplitude))
+        print("*   DC: %.3f V"  % (dc       ))
+        print("*  RMS: %.3f V"  % (rms      ))
+        print("*  Max: %.3f V"  % (max_s    ))
+        print("*  Min: %.3f V"  % (min_s    ))
+        print("*  SNR: %f (dB)" % (snr))
+        print("* THDN: %f" % (thdn))
+        subplot(211)
+        plot(samples)
+        grid()
+        title("Hardware Data")
+        xlabel('Samples')
+        ylabel('Voltage (V)')
+        subplot(212)
+        plot(freqs, mags)
+        xscale('log')
+        grid()
+        title("FFT")
+        xlabel('Frequency (Hz)')
+
+        tight_layout()
+        show()
+
+
+
 # parse args
 parser = ArgumentParser(description = 'Hardware Test Script for ADC')
-parser.add_argument('--mode', metavar='mode',        nargs=1, help = 'mode = [sine, measure, bode]')
+parser.add_argument('--mode', metavar='mode',        nargs=1, help = 'mode = [read, sine, measure, bode]')
 parser.add_argument('--freq', metavar='frequency',   nargs=1, help = 'waveform frequency')
 parser.add_argument('--amplitude',  metavar='amplitude',   nargs=1, help = 'waveform amplitude')
 parser.add_argument('--offset',  metavar='offset',   nargs=1, help = 'waveform offset')
@@ -322,3 +363,5 @@ if(args.mode[0] == 'measure'):
     hw.test_measure()
 if(args.mode[0] == 'bode'):
     hw.test_bode()
+if(args.mode[0] == 'read'):
+    hw.test_read()

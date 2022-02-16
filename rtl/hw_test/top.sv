@@ -289,7 +289,7 @@ module top
         255: 1048318
     };
         
-    localparam FREQ_CNT = 443;
+    localparam FREQ_CNT = 455;
     bit [31:0] lut_tick = 0;
     bit [7:0] lut_idx = 0;
     bit [BITLEN-1:0] lut_read = 0;
