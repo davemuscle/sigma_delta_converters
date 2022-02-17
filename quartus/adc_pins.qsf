@@ -15,7 +15,7 @@ set_location_assignment PIN_B4 -to led[6]
 set_location_assignment PIN_C5 -to led[7]
 
 set_instance_assignment -name IO_STANDARD "1.2 V" -to led[*]
-set_location_assignment PIN_M8 -to clk
+set_location_assignment PIN_M8 -to clk50
 
 #set_location_assignment PIN_V13 -to dac_pin
 set_location_assignment PIN_AA20 -to dac_pin

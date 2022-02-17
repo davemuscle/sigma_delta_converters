@@ -8,7 +8,8 @@ top  = top
 # TCL/QSF
 tcl_list = adc_pins.qsf
 # Qsys
-qsys_list =
+qsys_list = ../rtl/hw_test/pll/pll.qip
+v_list   += ../rtl/hw_test/pll/pll.v
 # SDC
 sdc_list = adc_timing.sdc
 ########################################################

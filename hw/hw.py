@@ -14,13 +14,13 @@ from DigilentAnalogDiscovery import *
 
 class HwTest:
     # constants for ADC inst
-    ADC_OVERSAMPLE_RATE = 1024
+    ADC_OVERSAMPLE_RATE = 128
     ADC_CIC_STAGES      = 2
-    ADC_BITLEN          = 20
+    ADC_BITLEN          = 14
     
     # constants for FPGA build
-    FPGA_NUM_SAMPLES = 4096
-    FPGA_BCLK        = 50000000
+    FPGA_NUM_SAMPLES = 512
+    FPGA_BCLK        = 6250000
     FPGA_UART        = '/dev/ttyS2'
     FPGA_BAUD        = 115200
     FPGA_VCC         = 3.3
@@ -30,7 +30,7 @@ class HwTest:
     waveform_frequency   = 440.0
     waveform_amplitude   = 1.0
     waveform_sweep_start = 220.0
-    waveform_sweep_end   = 60000.0
+    waveform_sweep_end   = FPGA_SAMPLERATE*2
     waveform_sweep_steps = 40
     waveform_dft_size    = 1024
     waveform_offset      = FPGA_VCC/2
@@ -284,7 +284,7 @@ class HwTest:
         dad = DigilentAnalogDiscovery()
         dad.open_device()
 
-        samples = dad.scope_config_read_buffer(buffer=4096, samplerate=self.FPGA_SAMPLERATE, range=7.0);
+        samples = dad.scope_config_read_buffer(buffer=self.FPGA_NUM_SAMPLES, samplerate=self.FPGA_SAMPLERATE, range=7.0);
         dad.close_device()
         
         amplitude, dc, rms = self.get_signal_properties(samples)
