@@ -19,7 +19,7 @@ class HwTest:
     ADC_BITLEN          = 14
     
     # constants for FPGA build
-    FPGA_NUM_SAMPLES = 512
+    FPGA_NUM_SAMPLES = 2048
     FPGA_BCLK        = 6250000
     FPGA_UART        = '/dev/ttyS2'
     FPGA_BAUD        = 115200

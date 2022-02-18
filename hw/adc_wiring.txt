@@ -1,3 +1,0 @@
-DECA [ADC+] - R1 [10K] - DAD [Wavegen0]
-DECA [ADC-] - R2 [10K] - DECA [SDM_FB]
-DECA [ADC-] - C1 [1nF, 102] - GND

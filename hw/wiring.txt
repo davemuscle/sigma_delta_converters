@@ -1,0 +1,13 @@
+DECA [ADC+] ---- R1 [10K ] ---- DAD [Wavegen]
+
+DECA [FB]   ---- R2 [10K]  ----
+                              |
+DECA [ADC-] ---- C1 [1nF]  ----
+                  |
+                 GND
+
+
+
+DECA [DAC] ---- R1 [10K] ---- C2 [1nF] ---> DAC Output
+                               |
+                              GND

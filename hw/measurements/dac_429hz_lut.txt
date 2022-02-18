@@ -1,0 +1,10 @@
+Opened device
+Closed device
+-------------------- Test Result --------------------
+*  Amp: 1.638 V
+*   DC: 1.558 V
+*  RMS: 1.929 V
+*  Max: 3.210 V
+*  Min: -0.065 V
+*  SNR: 38.490428 (dB)
+* THDN: 0.141774

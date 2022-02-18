@@ -2,6 +2,7 @@ module top
 (
     input bit clk50,
     input bit [1:0] sw,
+    input bit [1:0] key,
     input bit pin,
     output bit fb,
     output bit dac_pin,
@@ -14,29 +15,35 @@ module top
     localparam CIC = 2;
     localparam BITLEN = CIC*$clog2(OSR);
     localparam CLKRATE = 6250000;
-    localparam FREQ_CNT = CLKRATE / (256*440);
+    localparam FREQ_CNT = CLKRATE / (256*429);
     localparam BAUDRATE = 115200;
-    localparam NUM_SAMPLES = 512;
+    localparam NUM_SAMPLES = 2048;
     localparam WAIT_CNT = 500;
 
     bit clk;
+    bit [BITLEN-1:0] adc_output;
+    bit [BITLEN-1:0] dac_input;
+    bit adc_valid;
+    bit [BITLEN-1:0] shifter_output;
 
+    bit [31:0] lut_tick = 0;
+    bit [7:0] lut_idx = 0;
+    bit [BITLEN-1:0] lut_read = 0;
+
+    //50MHz to 6.25MHz
     pll	pll_inst (
 	.inclk0 ( clk50 ),
 	.c0 ( clk )
 	);
 
-    bit [BITLEN-1:0] adc_output;
-    bit [BITLEN-1:0] dac_input;
-    bit adc_valid;
 
     // instantiate adc
     sigma_delta_adc #(
         .OVERSAMPLE_RATE(OSR),
         .CIC_STAGES(CIC),
         .ADC_BITLEN(BITLEN),
-        .USE_FIR_COMP(1),
-        .FIR_COMP_ALPHA_8(2)
+        .USE_FIR_COMP(0),
+        .FIR_COMP_ALPHA_8(0)
     ) dut_adc (
         .clk(clk),
         .rst(1'b0),
@@ -46,6 +53,21 @@ module top
         .adc_valid(adc_valid)
     );
 
+
+    //pitch doubler/halver
+    shifter #(
+        .DATA_WIDTH(BITLEN),
+        .RAM_SIZE(512)
+    ) s (
+        .clk(clk),
+        .rst(1'b0),
+        .up(!key[0]),
+        .down(!key[1]),
+        .i_valid(adc_valid),
+        .i_data(adc_output),
+        .o_valid(),
+        .o_data(shifter_output)
+    );
 
     const int sine_lut [256] = '{
         0: 16284,1: 16281,2: 16274,3: 16262,4: 16245,5: 16223,6: 16196,7: 16164,
@@ -82,10 +104,6 @@ module top
         248: 16128,249: 16164,250: 16196,251: 16223,252: 16245,253: 16262,254: 16274,255: 16281
     };
         
-    bit [31:0] lut_tick = 0;
-    bit [7:0] lut_idx = 0;
-    bit [BITLEN-1:0] lut_read = 0;
-
     always_ff @(posedge clk) begin
         lut_tick <= lut_tick + 1;
         if(lut_tick == FREQ_CNT-1) begin
@@ -96,7 +114,7 @@ module top
     end
 
     always_comb begin
-        dac_input = (sw[1]) ? adc_output : lut_read;
+        dac_input = (sw[1]) ? shifter_output : lut_read;
     end
 
     sigma_delta_dac #(
@@ -107,10 +125,6 @@ module top
         .dac_input(dac_input),
         .dac_pin(dac_pin)
     );
-
-    always_comb begin
-        led = 8'hFF; //todo undo lights off
-    end
 
     //uart signals
     bit tvalid = 0;

@@ -6,17 +6,17 @@ v_list    =
 vhd_list  = 
 top  = top
 # TCL/QSF
-tcl_list = adc_pins.qsf
+tcl_list = pins.qsf
 # Qsys
 qsys_list = ../rtl/hw_test/pll/pll.qip
 v_list   += ../rtl/hw_test/pll/pll.v
 # SDC
-sdc_list = adc_timing.sdc
+sdc_list = timing.sdc
 ########################################################
 # Project Details
 family    = "MAX 10"
 device    = 10M50DAF484C6GES
-prj       = sigma_delta_adc
+prj       = sigma_delta_converters
 prj_dir   = prj
 pathfix   = ../
 src_list  = $(sv_list) $(v_list) $(vhd_list) 
