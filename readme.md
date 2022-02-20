@@ -202,16 +202,16 @@ Same with R3 and C2.
 
 ### Simulate (Modelsim)
 ```
-cd ./tb/adc 
+cd tb/adc 
 make clean sim plot
 
-cd ./tb/dac
+cd tb/dac
 make clean sim plot
 ```
 
 ### Build (Quartus)
 ```
-cd ./quartus
+cd quartus
 make
 ```
 
@@ -221,8 +221,8 @@ make
 //     https://github.com/davemuscle/fpga_tooling
 //     https://digilent.com/reference/test-and-measurement/analog-discovery-2/start
 
-cd ./quartus && make prog 
-cd ./hw.py
+cd quartus; make prog 
+cd hw
 ./hw.py -h
 ```
 
