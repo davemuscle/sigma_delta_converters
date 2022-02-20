@@ -226,23 +226,54 @@ cd ./hw.py
 ./hw.py -h
 ```
 
-# Demonstration
+## Demonstration
 
 I put together a small demonstration for displaying sound input/output by implementing a pitch
 shifting effect in RTL and building a class AB-amplifier for an 8-ohm speaker. The shifting effect
 is controlled by the two buttons on the development board. The entire sound path is controlled with
 the sigma-delta converters.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/MUQfKFzIOeU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-</iframe>
+**LINK TO VIDEO**
+
+## Implementation
+
+Below are my notes and ramblings about how the design was implemented.
+
+### Sigma Delta Modulator
+
+The Sigma Delta Modulator is the core of realizing digital ADCs and DACs. Input data is driven into
+the modulator and has the feedback path immediately subtracted from it. It’s then integrated into an
+accumulator and passed into a comparator, with the output creating a train of pulses. The data has
+now been modulated such that the number of high pulses will be proportional to the input value,
+which can then be filtered.
+
+![Image](/doc/modulator.png)
+
+### ADC
+
+The Sigma Delta ADC is composed of only a few subblocks: a CIC filter and an optional FIR
+compensator. CIC (Cascaded Integrator Comb) filters are efficient implementations of a moving
+average filter. They have a frequency response similar to a low-pass filter. Both the integrator and
+the comb stages can be repeated (cascaded) multiple times to achieve even better results. 
+
+The main benefit of a CIC filter is its use in multirate systems as you can achieve large
+downsampling ratios with just adders and subtractors. 
+
+![Image](/doc/adc.png)
+
+The FIR compensator is an optional parameterized step in the ADC design to balance the roll-off
+portion of the CIC filter. For my implementation I decided to reduce the available taps to only
+fractions of 8, then implement the multiplies as shifts and adds. I wanted a multiplier-less final
+design for the ADC.
+
+![Image](/doc/no_comp.png) ![Image](/doc/with_comp.png)
+
+### DAC
 
 
 
-# Implementation
 
-## Sigma Delta Modulator
-## ADC
-## DAC
-## Hardware Testing
-## References
+### Hardware Testing
+
+### References
 
