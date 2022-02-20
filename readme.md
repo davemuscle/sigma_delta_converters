@@ -26,10 +26,14 @@ System/FPGA Parameters:
 - USE_FIR_COMP    = 0
 - DAC_BITLEN      = 14
 - VCC             = 3.3V
+- Samplerate      = 48.8 kHz
 
 Measurement Parameters:
 - FFT size    = 1024
 - Buffer size = 2048
+- Bode fstart = 220 Hz
+- Bode fend   = 97.6 kHz
+- Bode fsteps = 40 
 
 ```
 +-----------------+-------------+---------------------------+--------------+
@@ -59,8 +63,7 @@ Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset
 *  SNR: 63.860299 (dB)
 * THDN: 0.022596
 ```
-
-![Image](/hw/measurements/adc_429hz_noise.png)
+![Image](/hw/measurements/adc_429hz_sine.png)
 
 ### ADC Ambient, Clean, and Noisy Measurements
 ```
@@ -95,6 +98,11 @@ Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset, 100 mV white noise
 *  THDN  : 0.02421072339512197
 
 ```
+![Image](/hw/measurements/adc_429hz_noise.png)
+
+### ADC Bode Plot Measurement
+
+![Image] (/hw/measurements/adc_bode_sweep.png)
 
 ## Usage
 ### Add the code to your build script
