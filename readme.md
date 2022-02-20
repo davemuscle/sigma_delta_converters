@@ -105,6 +105,20 @@ Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset, 100 mV white noise
 
 ![Image](/hw/measurements/adc_bode_sweep.png)
 
+### DAC SineLUT Measurement
+```
+Input: 429 Hz Sinewave, Fullscale 14-bit unsigned
+-------------------- Test Result --------------------
+*  Amp: 1.638 V
+*   DC: 1.558 V
+*  RMS: 1.929 V
+*  Max: 3.210 V
+*  Min: -0.065 V
+*  SNR: 38.490428 (dB)
+* THDN: 0.141774
+```
+![Image](/hw/measurements/dac_429hz_lut.png)
+
 ## Usage
 ### Add the code to your build script
 Include all of the SystemVerilog files under the 'rtl' directory:
