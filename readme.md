@@ -18,7 +18,7 @@ Potential applications for this design include:
 The results of the project were successful, resulting in low resource ADC and DAC designs that could
 cleanly process sound.
 
-Here is my implemented ADC digitizing sound, passing it through a frequency shifting effect, then
+Here is my implemented ADC digitizing a 500 Hz 1.0V sinewave, passing it through a frequency shifting effect, then
 back out the DAC. 
 
 ![Gif](/doc/shifter.gif)
@@ -265,12 +265,19 @@ the comb stages can be repeated (cascaded) multiple times to achieve even better
 The main benefit of a CIC filter is its use in multirate systems as you can achieve large
 downsampling ratios with just adders and subtractors. 
 
+
+
 ![Image](/doc/adc.png)
 
 The FIR compensator is an optional parameterized step in the ADC design to balance the roll-off
 portion of the CIC filter. For my implementation I decided to reduce the available taps to only
 fractions of 8, then implement the multiplies as shifts and adds. I wanted a multiplier-less final
 design for the ADC.
+
+The typical and best way to use the CIC decimator would be to only decimate a factor one less than
+your desired rate, then use a separate FIR filter that decimates by two. As can be seen below, 
+the CIC filter starts to roll-off at Fs/4. By limiting the decimation rate we can ultimately 
+achieve a flatter, cleaner passband.
 
 ![Image](/doc/filter_compare.png)
 
