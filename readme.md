@@ -14,21 +14,36 @@ The application-use for this project includes:
 - You don't like using IP and prefer to write things yourself
 
 ## Results
-The results shown below were gathered using my hardware test script that's described near the end of
-the page. The SNR and THDN were calculated spectrally by comparing the value of the fundamental
-frequency against the RMS of the other FFT bins.
+
+The results of the project were successful, resulting in low resource ADC and DAC designs. 
 
 System/FPGA Parameters:
-- CLK = 6.25 MHz
+- CLK             = 6.25 MHz
 - OVERSAMPLE_RATE = 128
-- CIC_STAGES = 2
-- ADC_BITLEN = 14
-- USE_FIR_COMP = 0
-- DAC_BITLEN = 14
+- CIC_STAGES      = 2
+- ADC_BITLEN      = 14
+- USE_FIR_COMP    = 0
+- DAC_BITLEN      = 14
+- VCC             = 3.3V
 
 Measurement Parameters:
-- FFT size = 1024
+- FFT size    = 1024
 - Buffer size = 2048
+
+```
++-----------------+------------+---------------------------+---------------+--------------+
+; Entity Name     ; Logic Cells ; Dedicated Logic Registers ; I/O Registers ; Memory Bits ;
++------------------------------+---------------------------+---------------+--------------+
+; sigma_delta_adc ; 126 (26)    ; 121 (25)                  ; 0 (0)         ; 0           ;
+; sigma_delta_dac ; 16 (16)     ; 16 (16)                   ; 0 (0)         ; 0           ;
++-----------------+------------+---------------------------+---------------+--------------+
+```
+
+Shown below a measurements gathered using my hardware test script that's described near the end of
+the page. The SNR and THDN were calculated spectrally by comparing the value of the fundamental
+frequency against the RMS of the other FFT bins. I chose to input a 429 Hz wave so that fundamental
+doesn't spread between bins, as this effects my noise comparison methods without some arbitrary fudging.
+
 
 ### ADC Standard Measurement 
 ```
