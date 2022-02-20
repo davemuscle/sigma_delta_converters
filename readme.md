@@ -18,6 +18,8 @@ Potential applications for this design include:
 The results of the project were successful, resulting in low resource ADC and DAC designs that could
 cleanly digitize sound.
 
+![Gif](/doc/shifter.gif)
+
 System/FPGA Parameters:
 - CLK             = 6.25 MHz
 - OVERSAMPLE_RATE = 128
@@ -64,7 +66,7 @@ Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset
 *  SNR: 63.860299 (dB)
 * THDN: 0.022596
 ```
-![Image](/hw/measurements/adc_429hz_sine.png)
+![Image](/doc/measurements/adc_429hz_sine.png)
 
 ### ADC Ambient, Clean, and Noisy Measurements
 ```
@@ -99,15 +101,15 @@ Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset, 100 mV white noise
 *  THDN  : 0.02421072339512197
 
 ```
-![Image](/hw/measurements/adc_429hz_noise.png)
+![Image](/doc/measurements/adc_429hz_noise.png)
 
 ### ADC Bode Plot Measurement
 
-![Image](/hw/measurements/adc_bode_sweep.png)
+![Image](/doc/measurements/adc_bode_sweep.png)
 
 ### DAC SineLUT Measurement
 ```
-Input: 429 Hz Sinewave, Fullscale 14-bit unsigned
+Input: 429 Hz Sinewave from ROM, Fullscale 14-bit unsigned
 -------------------- Test Result --------------------
 *  Amp: 1.638 V
 *   DC: 1.558 V
@@ -117,7 +119,7 @@ Input: 429 Hz Sinewave, Fullscale 14-bit unsigned
 *  SNR: 38.490428 (dB)
 * THDN: 0.141774
 ```
-![Image](/hw/measurements/dac_429hz_lut.png)
+![Image](/doc/measurements/dac_429hz_lut.png)
 
 ## Usage
 ### Add the code to your build script
@@ -179,7 +181,7 @@ glob <path to repo>/rtl/*.sv
 - **DAC_BITLEN** (integer, required)
     - Number of bits for the input signal.
 
-### Setup Hardware
+### Setup the Analog Hardware
 ```
 FPGA [ADC LVDS+] <--- R1 [10K] <--- Analog Input
 
