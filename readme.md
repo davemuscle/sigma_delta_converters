@@ -228,10 +228,16 @@ cd ./hw.py
 
 ## Demonstration
 
-I put together a small demonstration for displaying sound input/output by implementing a pitch
-shifting effect in RTL and building a class AB-amplifier for an 8-ohm speaker. The shifting effect
-is controlled by the two buttons on the development board. The entire sound path is controlled with
-the sigma-delta converters.
+For demonstrating sound in / sound out, I decided to port a portion of a school project from my
+Junior year of college: a crude octave up / down pitch shifter. I added the effect into the same
+hardware test design and made it controllable with a few tactile switches. 
+
+On the analog side, an AUX cable was hooked up from the breadboard to the function generator and a
+class-AB amplifier was added to the DAC for driving an 8ohm speaker. Finally, a .wav file of some
+dialogue was played, and the effect was successfully tested.
+
+I was pretty happy with my result, and surprised that I had a decent demonstration of digitizing
+sound with only three resistors and two capacitors.
 
 **LINK TO VIDEO**
 
@@ -270,10 +276,44 @@ design for the ADC.
 
 ### DAC
 
-
-
+The DAC design is much simpler than the ADC. For this project I decided to implement just a classic
+first order PWM DAC. It consists of an accumulator padded with an extra overflow bit. The extra bit
+is used as the output of the DAC that gets filtered on the analog side.
 
 ### Hardware Testing
 
-### References
+To verify my ADC and DAC worked outside of simulation, I used my digital oscilloscope/function
+generator from Digilent. They provide a Python API for interfacing with the tool that I wrapped in
+my own class to make using it easier.
 
+I added a small design to the FPGA build for sending data over UART. When the FPGA receives an ‘s’
+or ‘S’ character from the serial port, it samples data from the ADC until a buffer is filled. The
+buffer is then converted to ASCII text and sent back over the serial port for the Python script to
+read into a list for processing and plotting.
+
+![Image](/doc/setup.png)
+
+My hardware test script has a few modes:
+
+- sine:
+    - setup the function generator to a desired voltage / amplitude / frequency
+    - record samples, then plot digital data and perform an FFT
+    - measure SNR + THDN
+- measure
+    - record ambient data, record clean sinewave data, record noisy data
+    - perform FFT and compare results
+- bode
+    - sweep frequency and generate a logarithmic bode plot
+- read
+    - read data from the oscilloscope and perform FFT analysis for plotting
+
+
+### References
+http://www.ee.nmt.edu/~erives/531_14/Sigma-Delta.pdf
+https://www.analog.com/media/en/technical-documentation/application-notes/292524291525717245054923680458171AN283.pdf
+https://en.wikipedia.org/wiki/Delta-sigma_modulation
+https://www.maximintegrated.com/en/design/technical-documents/tutorials/1/1870.html
+https://tomverbeure.github.io/2020/09/30/Moving-Average-and-CIC-Filters.html
+https://www.dsprelated.com/showarticle/1337.php
+https://www.embedded.com/dsp-tricks-dc-removal/
+https://dsp.stackexchange.com/questions/19584/how-to-make-cic-compensation-filter
