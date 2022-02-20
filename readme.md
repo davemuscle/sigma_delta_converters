@@ -10,14 +10,14 @@ The overall application-use for this project is definitely limited. But, it coul
   analog features
 - You don't like using IP and prefer to write things yourself
 
-## Design
-### Usage
-#### Add code to your build script
+## Desig
+## Usage
+### Add the code to your build script
 Include all of the SystemVerilog files under the 'rtl' directory:
 ```
-glob ./rtl/*.sv
+glob <path to repo>/rtl/*.sv
 ```
-#### Instantiate the ADC
+### Instantiate the ADC
 ```
     // instantiate adc
     sigma_delta_adc #(
@@ -53,9 +53,10 @@ glob ./rtl/*.sv
 - FIR\_COMP\_ALPHA\_8 (integer, optional)
     - Value between 0 and 8 to select the tap value for the compensation filter. 
     - 0 -> alpha = 0
-    - 1 -> alpha = 0.125
+    - 1 -> alpha = 1/8 = 0.125,
+    - 2 -> alpha = 2/8 = 0.250, etc...
 
-#### Instantiate the DAC
+### Instantiate the DAC
 ```
     // instantiate dac
     sigma_delta_dac #(
