@@ -131,21 +131,21 @@ glob <path to repo>/rtl/*.sv
 ```
 ### Instantiate the ADC
 ```
-    // instantiate adc
-    sigma_delta_adc #(
-        .OVERSAMPLE_RATE (),
-        .CIC_STAGES      (),
-        .ADC_BITLEN      (),
-        .USE_FIR_COMP    (),
-        .FIR_COMP_ALPHA_8()
-    ) adc (
-        .clk          (),
-        .rst          (),
-        .adc_lvds_pin (),
-        .adc_fb_pin   (),
-        .adc_output   (),
-        .adc_valid    ()
-    );
+// instantiate adc
+sigma_delta_adc #(
+    .OVERSAMPLE_RATE (),
+    .CIC_STAGES      (),
+    .ADC_BITLEN      (),
+    .USE_FIR_COMP    (),
+    .FIR_COMP_ALPHA_8()
+) adc (
+    .clk          (),
+    .rst          (),
+    .adc_lvds_pin (),
+    .adc_fb_pin   (),
+    .adc_output   (),
+    .adc_valid    ()
+);
 ```
 - **OVERSAMPLE_RATE** (integer, required)
     - Desired oversampling ratio used on the incoming analog signal. A higher value
@@ -170,15 +170,15 @@ glob <path to repo>/rtl/*.sv
 
 ### Instantiate the DAC
 ```
-    // instantiate dac
-    sigma_delta_dac #(
-        .DAC_BITLEN()
-    ) dac (
-        .clk       (),
-        .rst       (),
-        .dac_input (),
-        .dac_pin   ()
-    );
+// instantiate dac
+sigma_delta_dac #(
+    .DAC_BITLEN()
+) dac (
+    .clk       (),
+    .rst       (),
+    .dac_input (),
+    .dac_pin   ()
+);
 ```
 - **DAC_BITLEN** (integer, required)
     - Number of bits for the input signal.
@@ -198,22 +198,30 @@ R2 and C1 should form a cutoff near the the sampling rate nyquist frequency.
 Same with R3 and C2.
 ```
 
-### Simulations
+### Simulate (Modelsim)
 ```
-    //adc sim
-    cd ./tb/adc 
-    make clean sim plot
-    
-    //dac sim (unfinished, didn't need a complex sim)
-    cd ./tb/dac
-    make clean sim plot
+cd ./tb/adc 
+make clean sim plot
+
+cd ./tb/dac
+make clean sim plot
 ```
 
-### Build
+### Build (Quartus)
 ```
-    //quartus build flow
-    cd ./quartus
-    make
+cd ./quartus
+make
+```
+
+### Hardware Test
+```
+// requirements:
+//     https://github.com/davemuscle/fpga_tooling
+//     https://digilent.com/reference/test-and-measurement/analog-discovery-2/start
+
+cd ./quartus && make prog 
+cd ./hw.py
+./hw.py -h
 ```
 
 
