@@ -236,6 +236,8 @@ On the analog side, an AUX cable was hooked up from the breadboard to the functi
 class-AB amplifier was added to the DAC for driving an 8ohm speaker. Finally, a .wav file of some
 dialogue was played, and the effect was successfully tested.
 
+![Image](/doc/amp.png)
+
 I was pretty happy with my result, and surprised that I had a decent demonstration of digitizing
 sound with only three resistors and two capacitors.
 
