@@ -46,7 +46,7 @@ Instantiate the ADC or DAC in your code:
 ```
 Setup the module generics based on your system:
 - sigma\_delta\_adc
-    - OVERSAMPLE\_RATE (integer, required)
+  - OVERSAMPLE\_RATE (integer, required)
         - Desired oversampling ratio used on the incoming analog signal. A higher value
           will decrease the noise floor at the cost of more FPGA LUTs.
         - The value here sets the output sampling rate. Eg: For clk = 50 MHz, an OSR of 1024
