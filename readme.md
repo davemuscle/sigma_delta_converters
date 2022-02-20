@@ -1,21 +1,22 @@
 # Sigma Delta ADCs and DACs for FPGA
-A little while ago I stumbled across a research paper describing how an Analog-to-Digital (ADC) 
+Recently I stumbled across a research paper describing how an Analog-to-Digital (ADC) 
 converter can be implemented almost entirely within an FPGA. The paper illustrated how a 
-differential input LVDS pin on the FPGA can be used as part of a Sigma Delta Modulator, which 
-enables the analog conversion. 
+differential input LVDS pin on the FPGA can be used as part of a Sigma Delta Modulator, which in
+part with a few resistors and capacitors enables the analog conversion. 
 
-This idea became more interesting the more I thought about it, 
-so here we are with this short project: creating unsigned ADCs and DACs in an FPGA, with only a few
+The idea became more interesting the more I thought about it, 
+so here we are with this short project: creating unsigned ADCs and DACs in an FPGA with only a few
 resistors and capacitors. 
 
-The application-use for this project includes:
-- Your FPGA development board did not have any analog pins broken out but your design requires some
+Potential applications for this design include:
+- Projects where your FPGA development board did not have any analog pins broken out but your design requires some
   analog features
-- You don't like using IP and prefer to write things yourself
+- Projects where you don't like using IP and prefer to write things yourself
 
 ## Results
 
-The results of the project were successful, resulting in low resource ADC and DAC designs. 
+The results of the project were successful, resulting in low resource ADC and DAC designs that could
+cleanly digitize sound.
 
 System/FPGA Parameters:
 - CLK             = 6.25 MHz
@@ -31,15 +32,15 @@ Measurement Parameters:
 - Buffer size = 2048
 
 ```
-+-----------------+------------+---------------------------+---------------+--------------+
-; Entity Name     ; Logic Cells ; Dedicated Logic Registers ; I/O Registers ; Memory Bits ;
-+------------------------------+---------------------------+---------------+--------------+
-; sigma_delta_adc ; 126 (26)    ; 121 (25)                  ; 0 (0)         ; 0           ;
-; sigma_delta_dac ; 16 (16)     ; 16 (16)                   ; 0 (0)         ; 0           ;
-+-----------------+------------+---------------------------+---------------+--------------+
++-----------------+-------------+---------------------------+--------------+
+; Entity Name     ; Logic Cells ; Dedicated Logic Registers ; Memory Bits ;
++-------------------------------+---------------------------+--------------+
+; sigma_delta_adc ; 126 (26)    ; 121 (25)                  ; 0           ;
+; sigma_delta_dac ; 16 (16)     ; 16 (16)                   ; 0           ;
++-----------------+-------------+---------------------------+--------------+
 ```
 
-Shown below a measurements gathered using my hardware test script that's described near the end of
+Below are measurements gathered using my hardware test script that's described near the end of
 the page. The SNR and THDN were calculated spectrally by comparing the value of the fundamental
 frequency against the RMS of the other FFT bins. I chose to input a 429 Hz wave so that fundamental
 doesn't spread between bins, as this effects my noise comparison methods without some arbitrary fudging.
@@ -58,6 +59,8 @@ Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset
 *  SNR: 63.860299 (dB)
 * THDN: 0.022596
 ```
+
+![Image]/hw/measure/adc_429hz_noise.png
 
 ### ADC Ambient, Clean, and Noisy Measurements
 ```
