@@ -30,15 +30,6 @@ System/FPGA Parameters:
 - ADC_BITLEN      = 14
 - USE_FIR_COMP    = 0
 - DAC_BITLEN      = 14
-- VCC             = 3.3V
-- Samplerate      = 48.8 kHz
-
-Measurement Parameters:
-- FFT size    = 1024
-- Buffer size = 2048
-- Bode fstart = 220 Hz
-- Bode fend   = 97.6 kHz
-- Bode fsteps = 40 
 
 ```
 Quartus Fitter Report:
@@ -55,6 +46,14 @@ the page. The SNR and THDN were calculated spectrally by comparing the value of 
 frequency against the RMS of the other FFT bins. I chose to input a 429 Hz wave so that fundamental
 doesn't spread between bins, as this effects my noise comparison methods without some arbitrary fudging.
 
+Measurement Parameters:
+- VCC             = 3.3V
+- Samplerate      = 48.8 kHz
+- FFT size    = 1024
+- Buffer size = 2048
+- Bode fstart = 220 Hz
+- Bode fend   = 2\*nyquist
+- Bode fsteps = 40 
 
 ### ADC Standard Measurement 
 ```
@@ -198,6 +197,25 @@ R1 is optional, but should match R2. It gave me better noise immunity on that pi
 R2 and C1 should form a cutoff near the the sampling rate nyquist frequency.
 Same with R3 and C2.
 ```
+
+### Simulations
+```
+    //adc sim
+    cd ./tb/adc 
+    make clean sim plot
+    
+    //dac sim (unfinished, didn't need a complex sim)
+    cd ./tb/dac
+    make clean sim plot
+```
+
+### Build
+```
+    //quartus build flow
+    cd ./quartus
+    make
+```
+
 
 # Demonstration
 
