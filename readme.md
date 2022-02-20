@@ -73,11 +73,16 @@ glob <path to repo>/rtl/*.sv
 ### Setup Hardware
 ```
 FPGA [ADC LVDS+] ---- R1 [10K] <--- Analog Input
+
 FPGA [ADC LVDS-] ----------------\
 FPGA [ADC FDBK ] ---- R2 [10K] --|-- C1 [1nF] -- GND
 
 FPGA [DAC PIN  ] ---- R3 [10K] --|-- C2 [1nF] -- GND
                                  \----> DAC  Output
+
+R1 is optional, but should match R2
+R2 and C1 should form a cutoff near the the sampling rate nyquist frequency
+Same with R3 and C2
 ```
 # Results
 
