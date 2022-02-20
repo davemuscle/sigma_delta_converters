@@ -310,10 +310,17 @@ My hardware test script has a few modes:
 
 ### References
 [New Mexico Tech, Taking Advantage of LVDS Input Buffers To Implement Sigma-Delta A/D Converters in FPGAs](http://www.ee.nmt.edu/~erives/531_14/Sigma-Delta.pdf)
+
 [Analog Devices, Sigma-Delta ADCs and DACs](https://www.analog.com/media/en/technical-documentation/application-notes/292524291525717245054923680458171AN283.pdf)
+
 [Wikipedia, Delta-Sigma Modulation](https://en.wikipedia.org/wiki/Delta-sigma_modulation)
+
 [Maxim Integrated Tutorial: Sigma-Delta ADCs](https://www.maximintegrated.com/en/design/technical-documents/tutorials/1/1870.html)
+
 [Tom Verbeure, Moving Average and CIC Filters](https://tomverbeure.github.io/2020/09/30/Moving-Average-and-CIC-Filters.html)
+
 [Rick Lyons, A Beginner's Guide to Cascaded Integrator-Comb (CIC) Filters](https://www.dsprelated.com/showarticle/1337.php)
+
 [Embedded, DSP Tricks: DC Removal](https://www.embedded.com/dsp-tricks-dc-removal/)
+
 [Dan Boschen, FIR Compensator Design](https://dsp.stackexchange.com/a/31596)
