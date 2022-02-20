@@ -70,6 +70,15 @@ glob <path to repo>/rtl/*.sv
 - **DAC_BITLEN** (integer, required)
     - Number of bits for the input signal.
 
+### Setup Hardware
+```
+FPGA [ADC LVDS+] ---- R1 [10K] <--- Analog Input
+FPGA [ADC LVDS-] ----------------\
+FPGA [ADC FDBK ] ---- R2 [10K] --|-- C1 [1nF] -- GND
+
+FPGA [DAC PIN  ] ---- R3 [10K] --|-- C2 [1nF] -- GND
+                                 \----> DAC  Output
+```
 # Results
 
 # Demonstration
