@@ -2,13 +2,81 @@
 A little while ago I stumbled across a research paper describing how an Analog-to-Digital (ADC) 
 converter can be implemented almost entirely within an FPGA. The paper illustrated how a 
 differential input LVDS pin on the FPGA can be used as part of a Sigma Delta Modulator, which 
-enables the analog conversion. This idea became more interesting the more I thought about it, 
-so here we are with this short project: creating unsigned ADCs and DACs almost entirely in an FPGA. 
+enables the analog conversion. 
 
-The overall application-use for this project is definitely limited. But, it could be helpful if:
+This idea became more interesting the more I thought about it, 
+so here we are with this short project: creating unsigned ADCs and DACs in an FPGA, with only a few
+resistors and capacitors. 
+
+The application-use for this project includes:
 - Your FPGA development board did not have any analog pins broken out but your design requires some
   analog features
 - You don't like using IP and prefer to write things yourself
+
+## Results
+The results shown below were gathered using my hardware test script that's described near the end of
+the page. The SNR and THDN were calculated spectrally by comparing the value of the fundamental
+frequency against the RMS of the other FFT bins.
+
+System/FPGA Parameters:
+- CLK = 6.25 MHz
+- OVERSAMPLE_RATE = 128
+- CIC_STAGES = 2
+- ADC_BITLEN = 14
+- USE_FIR_COMP = 0
+- DAC_BITLEN = 14
+
+Measurement Parameters:
+- FFT size = 1024
+- Buffer size = 2048
+
+### ADC Standard Measurement 
+```
+Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset
+-------------------- Test Results --------------------
+* Freq: 429.000
+*  Amp:     4757 = 0.958 V
+*   DC:     8339 = 1.680 V
+*  RMS:     8969 = 1.807 V
+*  Max:    13084 = 2.635 V
+*  Min:     3569 = 0.719 V
+*  SNR: 63.860299 (dB)
+* THDN: 0.022596
+```
+
+### ADC Ambient, Clean, and Noisy Measurements
+```
+Input: None
+-------------------- Ambient Results --------------------
+*  Amp(V): 0.0317230224609375
+*   DC(V): 1.668933302164079
+*  RMS(V): 1.668953692975981
+*  Max(V): 1.701361083984375
+*  Min(V): 1.6379150390625
+*  SNR (dB): 8.703418613807651
+*  THDN  : 17.123490615657396
+
+Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset
+-------------------- Clean Results --------------------
+*  Amp(V): 0.964984130859375
+*   DC(V): 1.6809912174940134
+*  RMS(V): 1.807885181178018
+*  Max(V): 2.63492431640625
+*  Min(V): 0.7049560546875
+*  SNR (dB): 64.91418976648241
+*  THDN  : 0.019623815470622377
+
+Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset, 100 mV white noise
+-------------------- Noisy Results --------------------
+*  Amp(V): 0.9859313964843749
+*   DC(V): 1.6738809764385225
+*  RMS(V): 1.8009232982815166
+*  Max(V): 2.6619140624999997
+*  Min(V): 0.69005126953125
+*  SNR (dB): 48.5305044966696
+*  THDN  : 0.02421072339512197
+
+```
 
 ## Usage
 ### Add the code to your build script
@@ -72,19 +140,18 @@ glob <path to repo>/rtl/*.sv
 
 ### Setup Hardware
 ```
-FPGA [ADC LVDS+] ---- R1 [10K] <--- Analog Input
+FPGA [ADC LVDS+] <--- R1 [10K] <--- Analog Input
 
-FPGA [ADC LVDS-] ----------------\
-FPGA [ADC FDBK ] ---- R2 [10K] --|-- C1 [1nF] -- GND
+FPGA [ADC LVDS-] <---------------\
+FPGA [ADC FDBK ] ---> R2 [10K] --|-- C1 [1nF] -- GND
 
-FPGA [DAC PIN  ] ---- R3 [10K] --|-- C2 [1nF] -- GND
-                                 \----> DAC  Output
+FPGA [DAC PIN  ] ---> R3 [10K] --|-- C2 [1nF] -- GND
+                                 \----> Analog  Output
 
-R1 is optional, but should match R2
-R2 and C1 should form a cutoff near the the sampling rate nyquist frequency
-Same with R3 and C2
+R1 is optional, but should match R2. It gave me better noise immunity on that pin.
+R2 and C1 should form a cutoff near the the sampling rate nyquist frequency.
+Same with R3 and C2.
 ```
-# Results
 
 # Demonstration
 
