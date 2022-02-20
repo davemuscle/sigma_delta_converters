@@ -12,11 +12,12 @@ The overall application-use for this project is definitely limited. But, it coul
 
 ## Design
 ### Usage
+#### Add code to your build script
 Include all of the SystemVerilog files under the 'rtl' directory:
 ```
 glob ./rtl/*.sv
 ```
-**Instantiate the ADC in your code:**
+#### Instantiate the ADC
 ```
     // instantiate adc
     sigma_delta_adc #(
@@ -34,7 +35,6 @@ glob ./rtl/*.sv
         .adc_valid    ()
     );
 ```
-**Setup the ADC parameters:**
 - OVERSAMPLE\_RATE (integer, required)
     - Desired oversampling ratio used on the incoming analog signal. A higher value
       will decrease the noise floor at the cost of more FPGA LUTs.
@@ -55,7 +55,7 @@ glob ./rtl/*.sv
     - 0 -> alpha = 0
     - 1 -> alpha = 0.125
 
-**Instantiate the DAC in your code:**
+#### Instantiate the DAC
 ```
     // instantiate dac
     sigma_delta_dac #(
@@ -67,7 +67,6 @@ glob ./rtl/*.sv
         .dac_pin   ()
     );
 ```
-**Setup the DAC parameters:**
 - DAC\_BITLEN (integer, required)
     - Number of bits for the input signal.
 
