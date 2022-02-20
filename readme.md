@@ -10,7 +10,6 @@ The overall application-use for this project is definitely limited. But, it coul
   analog features
 - You don't like using IP and prefer to write things yourself
 
-## Desig
 ## Usage
 ### Add the code to your build script
 Include all of the SystemVerilog files under the 'rtl' directory:
@@ -35,7 +34,7 @@ glob <path to repo>/rtl/*.sv
         .adc_valid    ()
     );
 ```
-- OVERSAMPLE\_RATE (integer, required)
+- **OVERSAMPLE\_RATE** (integer, required)
     - Desired oversampling ratio used on the incoming analog signal. A higher value
       will decrease the noise floor at the cost of more FPGA LUTs.
     - The value here sets the output sampling rate. Eg: For clk = 50 MHz, an OSR of 1024
