@@ -60,7 +60,7 @@ Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset
 * THDN: 0.022596
 ```
 
-![Image]/hw/measure/adc_429hz_noise.png
+![Image](/hw/measure/adc_429hz_noise.png)
 
 ### ADC Ambient, Clean, and Noisy Measurements
 ```
