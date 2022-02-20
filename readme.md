@@ -275,9 +275,10 @@ fractions of 8, then implement the multiplies as shifts and adds. I wanted a mul
 design for the ADC.
 
 The typical and best way to use the CIC decimator would be to only decimate a factor one less than
-your desired rate, then use a separate FIR filter that decimates by two. As can be seen below, 
-the CIC filter starts to roll-off at Fs/4. By limiting the decimation rate we can ultimately 
-achieve a flatter, cleaner passband.
+your desired rate, then use a separate FIR filter that decimates by two. For example, to get 
+a 48.8 KHz signal from a 50 MHz clock source, downsample by 512 (CIC) then by 2 (FIR). As can be seen below, 
+the CIC filter starts to roll-off at Fs/4. By limiting the decimation rate then adding the extra FIR
+stage, we can ultimately achieve a flatter, cleaner passband.
 
 ![Image](/doc/filter_compare.png)
 
