@@ -16,7 +16,10 @@ Potential applications for this design include:
 ## Results
 
 The results of the project were successful, resulting in low resource ADC and DAC designs that could
-cleanly digitize sound.
+cleanly process sound.
+
+Here is my implemented ADC digitizing sound, passing it through a frequency shifting effect, then
+back out the DAC. 
 
 ![Gif](/doc/shifter.gif)
 
