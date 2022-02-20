@@ -36,11 +36,12 @@ Measurement Parameters:
 - Bode fsteps = 40 
 
 ```
+Quartus Fitter Report:
 +-----------------+-------------+---------------------------+--------------+
-; Entity Name     ; Logic Cells ; Dedicated Logic Registers ; Memory Bits ;
+; Entity Name     ; Logic Cells ; Dedicated Logic Registers ; Memory Bits  ;
 +-------------------------------+---------------------------+--------------+
-; sigma_delta_adc ; 126 (26)    ; 121 (25)                  ; 0           ;
-; sigma_delta_dac ; 16 (16)     ; 16 (16)                   ; 0           ;
+; sigma_delta_adc ; 126 (26)    ; 121 (25)                  ; 0            ;
+; sigma_delta_dac ; 16 (16)     ; 16 (16)                   ; 0            ;
 +-----------------+-------------+---------------------------+--------------+
 ```
 
@@ -102,7 +103,7 @@ Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset, 100 mV white noise
 
 ### ADC Bode Plot Measurement
 
-![Image] (/hw/measurements/adc_bode_sweep.png)
+![Image](/hw/measurements/adc_bode_sweep.png)
 
 ## Usage
 ### Add the code to your build script
