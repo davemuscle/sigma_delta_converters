@@ -46,29 +46,29 @@ Instantiate the ADC or DAC in your code:
 ```
 Setup the module generics based on your system:
 - sigma\_delta\_adc
-    - OVERSAMPLE\_RATE (integer, required)
-        - Desired oversampling ratio used on the incoming analog signal. A higher value
-          will decrease the noise floor at the cost of more FPGA LUTs.
-        - The value here sets the output sampling rate. Eg: For clk = 50 MHz, an OSR of 1024
-          produces a signal sampled at 48.8 KHz.
-        - Only powers-of-2 were tested.
-    - CIC\_STAGES (integer, required)
-        - Number of integrator and comb stages to instantiate in the decimating CIC filter. A higher
-          value produces a sharper frequency response in the transition region at the cost of FPGA
-          LUTs.
-    - ADC\_BITLEN (integer, required)
-        - Number of bits for the output signal. Recommended value is: *CIC_STAGES\*$clog2(OVERSAMPLE_RATE)*
-    - USE\_FIR\_COMP (bit, optional)
-        - Enable the compensation FIR filter on the output path for possibly a better balanced
-          frequency response on the CIC filter.
-    - FIR\_COMP\_ALPHA\_8 (integer, optional)
-        - Value between 0 and 8 to select the tap value for the compensation filter. 
-        - 0 -> alpha = 0
-        - 1 -> alpha = 0.125
+ - OVERSAMPLE\_RATE (integer, required)
+  - Desired oversampling ratio used on the incoming analog signal. A higher value
+    will decrease the noise floor at the cost of more FPGA LUTs.
+  - The value here sets the output sampling rate. Eg: For clk = 50 MHz, an OSR of 1024
+    produces a signal sampled at 48.8 KHz.
+  - Only powers-of-2 were tested.
+ - CIC\_STAGES (integer, required)
+  - Number of integrator and comb stages to instantiate in the decimating CIC filter. A higher
+    value produces a sharper frequency response in the transition region at the cost of FPGA
+    LUTs.
+ - ADC\_BITLEN (integer, required)
+  - Number of bits for the output signal. Recommended value is: *CIC_STAGES\*$clog2(OVERSAMPLE_RATE)*
+ - USE\_FIR\_COMP (bit, optional)
+  - Enable the compensation FIR filter on the output path for possibly a better balanced
+    frequency response on the CIC filter.
+ - FIR\_COMP\_ALPHA\_8 (integer, optional)
+  - Value between 0 and 8 to select the tap value for the compensation filter. 
+  - 0 -> alpha = 0
+  - 1 -> alpha = 0.125
 
 - sigma\_delta\_dac
-    - DAC\_BITLEN (integer, required)
-        - Number of bits for the input signal.
+ - DAC\_BITLEN (integer, required)
+  - Number of bits for the input signal.
 
 # Results
 
