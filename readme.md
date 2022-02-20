@@ -45,7 +45,7 @@ Instantiate the ADC or DAC in your code:
     );
 ```
 Setup the module generics based on your system:
-- ADC
+- sigma\_delta\_adc
     - OVERSAMPLE\_RATE (integer, required)
         - Desired oversampling ratio used on the incoming analog signal. A higher value
           will decrease the noise floor at the cost of more FPGA LUTs.
@@ -64,8 +64,11 @@ Setup the module generics based on your system:
     - FIR\_COMP\_ALPHA\_8 (integer, optional)
         - Value between 0 and 8 to select the tap value for the compensation filter. 
         - 0 -> alpha = 0
-        - 1 -> alpha = 0.125 poo
+        - 1 -> alpha = 0.125
 
+- sigma\_delta\_dac
+    - DAC\_BITLEN (integer, required)
+        - Number of bits for the input signal.
 
 # Results
 
