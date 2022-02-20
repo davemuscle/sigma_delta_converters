@@ -106,7 +106,9 @@ Input: 429 Hz Sinewave, 1.0V Amplitude, 1.67V Offset, 100 mV white noise
 ![Image](/doc/measurements/adc_429hz_noise.png)
 
 ### ADC Bode Plot Measurement
-
+```
+Input: Variable frequency sinewave, 1.0V Amplitude, 1.67V Offset
+```
 ![Image](/doc/measurements/adc_bode_sweep.png)
 
 ### DAC SineLUT Measurement
@@ -224,8 +226,20 @@ cd ./hw.py
 ./hw.py -h
 ```
 
-
 # Demonstration
+
+I put together a small demonstration for displaying sound input/output by implementing a pitch
+shifting effect in RTL and building a class AB-amplifier for an 8-ohm speaker. The shifting effect
+is controlled by the two buttons on the development board. The entire sound path is controlled with
+the sigma-delta converters.
+
+<iframe width="560" height="315"
+src="https://www.youtube.com/embed/MUQfKFzIOeU" 
+frameborder="0" 
+allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" 
+allowfullscreen></iframe>
+
+
 
 # Implementation
 
