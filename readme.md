@@ -233,11 +233,8 @@ shifting effect in RTL and building a class AB-amplifier for an 8-ohm speaker. T
 is controlled by the two buttons on the development board. The entire sound path is controlled with
 the sigma-delta converters.
 
-<iframe width="560" height="315"
-src="https://www.youtube.com/embed/MUQfKFzIOeU" 
-frameborder="0" 
-allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" 
-allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/MUQfKFzIOeU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+</iframe>
 
 
 
