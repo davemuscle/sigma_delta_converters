@@ -266,7 +266,7 @@ portion of the CIC filter. For my implementation I decided to reduce the availab
 fractions of 8, then implement the multiplies as shifts and adds. I wanted a multiplier-less final
 design for the ADC.
 
-![Image](/doc/no_comp.png) ![Image](/doc/with_comp.png)
+![Image](/doc/filter_compare.png)
 
 ### DAC
 
