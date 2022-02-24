@@ -64,7 +64,8 @@ summary:
 	@echo ""
 
 .PHONY: prog
-prog: $(prj_dir)/$(prj).sof
+#prog: $(prj_dir)/$(prj).sof
+prog:
 	quartus_pgm -m jtag -o "p;$(prj_dir)/$(prj).sof"
 
 .PHONY: clean
