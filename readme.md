@@ -246,7 +246,7 @@ CTRL+click the video thumbnails to open in a new tab
 | Youtube Videos |
 | :--: |
 | *Sigma-Delta A/D Converters in FPGA* |
-| [![Image](/doc/vid01_tb.png)](https://youtu.be/dKhM7zcvpbM) |
+| [![Image](/doc/vid01_tb.jpg)](https://youtu.be/dKhM7zcvpbM) |
 
 ## Implementation
 
