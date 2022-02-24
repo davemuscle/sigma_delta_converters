@@ -13,6 +13,28 @@ Potential applications for this design include:
   analog features
 - Projects where you don't like using IP and prefer to write things yourself
 
+## Demonstration
+
+For demonstrating sound in / sound out, I decided to port a portion of a school project from my
+Junior year of college: a crude octave up / down pitch shifter. I added the effect into the same
+hardware test design and made it controllable with a few tactile switches. 
+
+On the analog side, an AUX cable was hooked up from the breadboard to the function generator and a
+class-AB amplifier was added to the DAC for driving an 8ohm speaker. Finally, a .wav file of some
+dialogue was played, and the effect was successfully tested.
+
+![Image](/doc/amp.png)
+
+I was pretty happy with my result, and surprised that I had a decent demonstration of digitizing
+sound with only three resistors and two capacitors.
+
+CTRL+click the video thumbnails to open in a new tab
+
+| Youtube Videos |
+| :--: |
+| *Sigma-Delta A/D Converters in FPGA* |
+| [![Image](/doc/vid01_tb.png)](https://youtu.be/dKhM7zcvpbM) |
+
 ## Results
 
 The results of the project were successful, resulting in low resource ADC and DAC designs that could
@@ -226,28 +248,6 @@ cd hw
 ./hw.py -h
 ```
 
-## Demonstration
-
-For demonstrating sound in / sound out, I decided to port a portion of a school project from my
-Junior year of college: a crude octave up / down pitch shifter. I added the effect into the same
-hardware test design and made it controllable with a few tactile switches. 
-
-On the analog side, an AUX cable was hooked up from the breadboard to the function generator and a
-class-AB amplifier was added to the DAC for driving an 8ohm speaker. Finally, a .wav file of some
-dialogue was played, and the effect was successfully tested.
-
-![Image](/doc/amp.png)
-
-I was pretty happy with my result, and surprised that I had a decent demonstration of digitizing
-sound with only three resistors and two capacitors.
-
-CTRL+click the video thumbnails to open in a new tab
-
-| Youtube Videos |
-| :--: |
-| *Sigma-Delta A/D Converters in FPGA* |
-| [![Image](/doc/vid01_tb.png)](https://youtu.be/dKhM7zcvpbM) |
-
 ## Implementation
 
 Below are my notes and ramblings about how the design was implemented.
@@ -271,8 +271,6 @@ the comb stages can be repeated (cascaded) multiple times to achieve even better
 
 The main benefit of a CIC filter is its use in multirate systems as you can achieve large
 downsampling ratios with just adders and subtractors. 
-
-
 
 ![Image](/doc/adc.png)
 
