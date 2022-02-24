@@ -241,7 +241,12 @@ dialogue was played, and the effect was successfully tested.
 I was pretty happy with my result, and surprised that I had a decent demonstration of digitizing
 sound with only three resistors and two capacitors.
 
-**LINK TO VIDEO**
+CTRL+click the video thumbnails to open in a new tab
+
+| Youtube Videos |
+| :--: |
+| *Sigma-Delta A/D Converters in FPGA* |
+| [![Image](/doc/vid01_tb.png)](https://youtu.be/dKhM7zcvpbM) |
 
 ## Implementation
 
