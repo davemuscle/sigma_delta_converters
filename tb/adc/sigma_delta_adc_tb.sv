@@ -12,6 +12,8 @@ module sigma_delta_adc_tb #(
     parameter bit USE_FIR_COMP       = 1,
     parameter int FIR_COMP_ALPHA_8   = 2,
     //tb params
+    parameter int    USE_DC      = 0,
+    parameter real   DC_VALUE    = 1.67,
     parameter int    DUMP_VCD    = 0,
     parameter int    BCLK        = 12880000,
     parameter int    NUM_CYCLES  = 10,
@@ -60,7 +62,7 @@ module sigma_delta_adc_tb #(
         fd = $fopen(INPUT_FILE, "w");
         while(sample_in < NUM_SAMPLES) begin
             //generate wave
-            adc_input = AMPLITUDE*$cos(2.0*3.14*FREQUENCY*sample_in/BCLK) + OFFSET;
+            adc_input = (!USE_DC) ? AMPLITUDE*$cos(2.0*3.14*FREQUENCY*sample_in/BCLK) + OFFSET : OFFSET;
             sample_in = sample_in + 1;
             //write to file
             $fdisplay(fd, "%f", adc_input);
