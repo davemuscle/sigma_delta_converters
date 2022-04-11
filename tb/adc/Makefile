@@ -13,6 +13,7 @@ sim_params += USE_FIR_COMP=0
 sim_params += FIR_COMP_ALPHA_8=2
 sim_params += DUMP_VCD=1
 sim_params += USE_DC=0
+sim_params += OUTPUT_DIGITAL=0
 sim_params += BCLK=12288000
 sim_params += NUM_CYCLES=4
 sim_params += VCC=3.3

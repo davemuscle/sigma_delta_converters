@@ -6,23 +6,24 @@
 
 module sigma_delta_adc_tb #(
     //dut params
-    parameter int OVERSAMPLE_RATE    = 256,
-    parameter int CIC_STAGES         = 2,
-    parameter int ADC_BITLEN         = 24,
-    parameter bit USE_FIR_COMP       = 1,
-    parameter int FIR_COMP_ALPHA_8   = 2,
+    parameter int OVERSAMPLE_RATE   = 256,
+    parameter int CIC_STAGES        = 2,
+    parameter int ADC_BITLEN        = 24,
+    parameter bit USE_FIR_COMP      = 1,
+    parameter int FIR_COMP_ALPHA_8  = 2,
     //tb params
-    parameter int    USE_DC      = 0,
-    parameter real   DC_VALUE    = 1.67,
-    parameter int    DUMP_VCD    = 0,
-    parameter int    BCLK        = 12880000,
-    parameter int    NUM_CYCLES  = 10,
-    parameter real   VCC         = 2.5,
-    parameter real   FREQUENCY   = 440.0,
-    parameter real   AMPLITUDE   = 1.0,
-    parameter real   OFFSET      = 1.25,
-    parameter string INPUT_FILE  = "test_input.txt",  //expected raw floats representing voltage
-    parameter string OUTPUT_FILE = "test_output.txt" //same as above
+    parameter int    USE_DC         = 0,
+    parameter bit    OUTPUT_DIGITAL = 0,
+    parameter real   DC_VALUE       = 1.67,
+    parameter int    DUMP_VCD       = 0,
+    parameter int    BCLK           = 12880000,
+    parameter int    NUM_CYCLES     = 10,
+    parameter real   VCC            = 2.5,
+    parameter real   FREQUENCY      = 440.0,
+    parameter real   AMPLITUDE      = 1.0,
+    parameter real   OFFSET         = 1.25,
+    parameter string INPUT_FILE     = "test_input.txt",  //expected raw floats representing voltage
+    parameter string OUTPUT_FILE    = "test_output.txt" //same as above
 );
 
     bit sim_done = 0;
@@ -144,12 +145,14 @@ module sigma_delta_adc_tb #(
             @(posedge adc_valid) begin
                 //convert to float for file io reuse
                 adc_output_voltage = real'(adc_output);
-                //convert to voltage
-                adc_output_voltage *= VCC;
-                //scale by the number of ADC bits, corresponds to:
-                //CIC_STAGES*OVERSAMPLE_RATE
-                for(i = 0; i < CIC_STAGES; i = i + 1) begin
-                    adc_output_voltage = adc_output_voltage / real'(OVERSAMPLE_RATE);
+                if(!OUTPUT_DIGITAL) begin
+                    //convert to voltage
+                    adc_output_voltage *= VCC;
+                    //scale by the number of ADC bits, corresponds to:
+                    //CIC_STAGES*OVERSAMPLE_RATE
+                    for(i = 0; i < CIC_STAGES; i = i + 1) begin
+                        adc_output_voltage = adc_output_voltage / real'(OVERSAMPLE_RATE);
+                    end
                 end
                 samples_out = samples_out + 1;
                 //write output into file
